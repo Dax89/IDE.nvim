@@ -1,0 +1,65 @@
+local Path = require("plenary.path")
+local Scan = require("plenary.scandir")
+
+local function select_item(path, onchoice, options, level)
+    level = level or 0
+
+    local function is_root(p)
+        if options.limitroot and level == 0 then
+            return true
+        end
+
+        return p.sep == "\\" and string.match(p.filename, "^[A-Z]:\\?$") or p.filename == "/"
+    end
+
+    local items = vim.tbl_map(function(item)
+        return Path:new(item)
+    end, Scan.scan_dir(tostring(path), vim.tbl_extend("force", options, {depth = 1})))
+
+    if not is_root(path) then
+        table.insert(items, 1, "..")
+    end
+
+    if options.only_dirs then
+        table.insert(items, 1, "<SELECT FOLDER>")
+    end
+
+    vim.ui.select(items, {
+        prompt = path.filename,
+        format_item = function(item)
+            if type(item) ~= "string" then
+                return (item:is_dir() and " " or " ") .. vim.fn.fnamemodify(item.filename, ":t")
+            end
+            return item
+        end
+    },
+    function(choice)
+        if choice then
+            if choice == "<SELECT FOLDER>" then
+                onchoice(path)
+            elseif choice == ".." then
+                if not is_root(choice) then
+                    select_item(path:parent(), onchoice, options, level - 1)
+                end
+            elseif choice:is_dir() then
+                select_item(Path:new(choice), onchoice, options, level + 1)
+            elseif not options.only_dirs and choice:is_file() then
+                onchoice(choice)
+            end
+        end
+    end)
+end
+
+local Picker = { }
+
+function Picker.select_folder(onchoice, options)
+    options = options or { }
+    select_item(Path:new(options.cwd or vim.loop.os_homedir()), onchoice, vim.tbl_extend("force", options, {only_dirs = true}))
+end
+
+function Picker.select_file(onchoice, options)
+    options = options or { }
+    select_item(Path:new(options.cwd or vim.loop.os_homedir()), onchoice, vim.tbl_extend("force", options, {add_dirs = true}))
+end
+
+return Picker
