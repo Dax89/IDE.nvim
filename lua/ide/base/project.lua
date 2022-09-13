@@ -58,6 +58,11 @@ end
 
 function Project:create()
     self:untemplate()
+
+    if self.builder then
+        self.builder:create()
+    end
+
     self:save()
 end
 

@@ -23,6 +23,9 @@ function Builder:debug(_)
     self.project:get_build_path():mkdir()
 end
 
+function Builder:create()
+end
+
 function Builder:stop()
 end
 
