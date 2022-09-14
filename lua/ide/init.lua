@@ -4,27 +4,13 @@ local Path = require("plenary.path")
 local IDE = Utils.class()
 
 function IDE:init(config)
-    self._config = config or { }
     self._storage = Path:new(vim.fn.stdpath("data"), "ide")
-    self._types = {}
-    self._active = nil
-    self._projects = { }
+    self.config = config or { }
+    self.active = nil
+    self.projects = { }
 
     self._storage:mkdir({parents = true, exists_ok = true})
     require("ide.integrations.dap").setup(config)
-end
-
-function IDE:get_types()
-    if vim.tbl_isempty(self._types) then
-        local Scan = require("plenary.scandir")
-        local types = Path:new(Utils.get_plugin_root(), "lua", "ide", "projects")
-
-        self._types = vim.tbl_map(function(t)
-            return Utils.get_filename(t)
-        end, Scan.scan_dir(tostring(types), {only_dirs = true, depth = 1}))
-    end
-
-    return self._types
 end
 
 function IDE:_load_recents()
@@ -33,7 +19,7 @@ function IDE:_load_recents()
 
     if recentspath:is_file() then
         recents = vim.tbl_filter(function(proj) -- Filter deleted projects
-            return Path:new(proj.root, self._config.project_file):is_file()
+            return Path:new(proj.root, self.config.project_file):is_file()
         end, Utils.read_json(recentspath))
     end
 
@@ -63,31 +49,17 @@ function IDE:_update_recents(project)
     Utils.write_json(recentspath, recents)
 end
 
-function IDE:_create_project(name, t)
-    local ok, ProjectType = pcall(require, string.format("ide.projects.%s", t))
-
-    if ok then
-        require("ide.ui.picker").select_folder(function(f)
-            local p = ProjectType(self._config, f, name)
-            self._projects[f.filename] = p
-            self._active = f.filename
-            p:create()
-            self:pick_file(p:get_path(true))
-        end)
-    end
-end
-
 function IDE:get_active()
-    return self._active and self._projects[self._active] or nil
+    return self.active and self.projects[self.active] or nil
 end
 
 function IDE:get_projects()
-    return vim.tbl_values(self._projects)
+    return vim.tbl_values(self.projects)
 end
 
 function IDE:pick_file(rootdir)
     local Picker = require("ide.ui.picker")
-    local p = Utils.read_json(Path:new(tostring(rootdir), self._config.project_file))
+    local p = Utils.read_json(Path:new(tostring(rootdir), self.config.project_file))
 
     Picker.select_file(function(filepath)
         self:project_check(filepath, p.type)
@@ -115,7 +87,7 @@ function IDE:recent_projects()
 end
 
 function IDE:project_check(filepath, filetype)
-    if #filetype == 0 or vim.tbl_contains(self._config.ignore_filetypes, filetype) then
+    if #filetype == 0 or vim.tbl_contains(self.config.ignore_filetypes, filetype) then
         return
     end
 
@@ -132,16 +104,16 @@ function IDE:project_check(filepath, filetype)
         ProjectType = require("ide.base.project") -- Try to guess a generic project
     end
 
-    local res = ProjectType.check(p:is_file() and p:parent() or p, self._config)
+    local res = ProjectType.check(p:is_file() and p:parent() or p, self.config)
 
     if res then
-        if not self._projects[res.root] then
-            local project = ProjectType(self._config, res.root, res.name, res.builder)
-            self._projects[res.root] = project
+        if not self.projects[res.root] then
+            local project = ProjectType(self.config, res.root, res.name, res.builder)
+            self.projects[res.root] = project
             self:_update_recents(project)
         end
 
-        self._active = res.root
+        self.active = res.root
 
         if vim.fn.getcwd() ~= res.root then
             vim.api.nvim_set_current_dir(res.root)
@@ -150,49 +122,42 @@ function IDE:project_check(filepath, filetype)
 end
 
 function IDE:project_create()
-    vim.ui.input("Project Name", function(name)
-        if name then
-            vim.ui.select(self:get_types(), {prompt = "Project Type"}, function(type)
-                if type then
-                    self:_create_project(name, type)
-                end
-            end)
-        end
-    end)
+    local CreateProjectDialog = require("ide.ui.dialogs.createproject")
+    CreateProjectDialog(self):show()
 end
 
-function IDE:project_configure()
-    if self._active then
+function IDE:projectconfigure()
+    if self.active then
         self:get_active():configure()
     end
 end
 
 function IDE:project_build()
-    if self._active then
+    if self.active then
         self:get_active():build()
     end
 end
 
 function IDE:project_run()
-    if self._active then
+    if self.active then
         self:get_active():run()
     end
 end
 
 function IDE:project_debug()
-    if self._active then
+    if self.active then
         self:get_active():debug()
     end
 end
 
 function IDE:project_settings()
-    if self._active then
+    if self.active then
         self:get_active():settings()
     end
 end
 
 function IDE:project_write()
-    if self._active then
+    if self.active then
         self:get_active():write()
     end
 end
