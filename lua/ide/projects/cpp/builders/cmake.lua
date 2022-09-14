@@ -56,7 +56,7 @@ function CMake:_select_mode(cb)
     }, function(mode)
         if mode then
             self.project:set_mode(mode)
-            self.project:save_data()
+            self.project:write()
             self:_configure({sync = true})
             vim.F.npcall(cb, mode)
         end
@@ -75,7 +75,7 @@ function CMake:_select_target(cb)
     }, function(target)
         if target then
             self.project:set_option("target", target)
-            self.project:save_data()
+            self.project:write()
             vim.F.npcall(cb, target)
         end
     end)
@@ -101,7 +101,7 @@ function CMake:_configure(options)
         local targets = self:_get_targets()
         if not vim.tbl_isempty(targets) then
             self.project:set_option("target", targets[1])
-            self.project:save_data()
+            self.project:write()
         end
     end
 end
