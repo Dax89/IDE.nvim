@@ -18,6 +18,7 @@ function Project:init(config, path, name, builder)
         name = name,
         type = self:get_type(),
         mode = nil,
+        builder = builder,
         options = { }
     }
 
@@ -38,7 +39,7 @@ function Project:init(config, path, name, builder)
             error("Builder '" .. builder .. "' not found")
         end
 
-        self.builder = ok and BuilderType(self) or nil
+        self.builder = BuilderType(self)
     end
 
     if self.config.auto_create then
@@ -137,14 +138,22 @@ function Project._check_pattern(path, pattern)
     return isdir and p:is_dir() or p:is_file()
 end
 
+function Project._find_pattern_in_fs(filepath, options)
+    local patterns = vim.tbl_islist(options.patterns) and options.patterns or vim.tbl_keys(options.patterns)
+
+    for _, pattern in ipairs(patterns) do
+        if Project._check_pattern(filepath, pattern) then
+            return pattern
+        end
+    end
+
+    return nil
+end
+
 function Project._find_root_in_fs(filepath, options)
     for _, cp in ipairs(filepath:parents()) do
-        local patterns = vim.tbl_islist(options.patterns) and options.patterns or vim.tbl_keys(options.patterns)
-
-        for _, pattern in ipairs(patterns) do
-            if Project._check_pattern(cp, pattern) then
-                return cp
-            end
+        if Project._find_pattern_in_fs(cp, options) then
+            return tostring(cp)
         end
     end
 
@@ -168,23 +177,27 @@ function Project.guess_project(filepath, type, options, config)
         p = gitroot[1]
     end
 
-    assert(p, "Invalid project path")
+    assert(p, "Invalid project root")
+    local pattern = Project._find_pattern_in_fs(p, options)
+    assert(pattern, "Project pattern not found")
+
     local name = vim.fn.fnamemodify(p, ":t")
     local projfile = Path:new(p, config.project_file)
 
     if projfile:is_file() then
         local nvide = Utils.read_json(projfile)
+
         if nvide.type ~= type then
             return nil
         end
+
         name = nvide.name
     end
 
-    return {
-        pattern = options[projfile],
+    return vim.tbl_extend("force", {
         name = name,
         root = p
-    }
+    }, options.patterns[pattern] or { })
 end
 
 function Project:untemplate()

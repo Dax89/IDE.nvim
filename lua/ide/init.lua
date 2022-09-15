@@ -111,6 +111,10 @@ function IDE:project_check(filepath, filetype)
             local project = ProjectType(self.config, res.root, res.name, res.builder)
             self.projects[res.root] = project
             self:_update_recents(project)
+
+            vim.defer_fn(function()
+                project:on_ready()
+            end, 1000)
         end
 
         self.active = res.root
