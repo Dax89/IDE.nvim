@@ -1,7 +1,7 @@
 # ide.nvim
 `ide.nvim` is born from parts of my personal NeoVim configuration and it aims to have nice Project Management, Build, and Debug support for various type of programming languages.
 
-<ins>**NOTE:** This plugin is still under development, it can be unstable and/or API can change!</ins>
+<ins>**NOTE:** This plugin is still under development, it can be unstable and API can change!</ins>
 
 # Installation
 ```lua
