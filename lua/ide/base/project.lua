@@ -179,7 +179,10 @@ function Project.guess_project(filepath, type, options, config)
 
     assert(p, "Invalid project root")
     local pattern = Project._find_pattern_in_fs(p, options)
-    assert(pattern, "Project pattern not found")
+
+    if not pattern then
+        return nil
+    end
 
     local name = vim.fn.fnamemodify(p, ":t")
     local projfile = Path:new(p, config.project_file)

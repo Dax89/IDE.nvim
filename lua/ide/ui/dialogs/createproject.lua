@@ -1,48 +1,50 @@
 local Utils = require("ide.utils")
-local Dialog = require("ide.ui.base.dialog")
+local Components = require("ide.ui.lib.components")
+local Dialogs = require("ide.ui.lib.dialogs")
 
-local CreateProjectDialog = Utils.class(Dialog)
+local CreateProjectDialog = Utils.class(Dialogs.Dialog)
 
 function CreateProjectDialog:init(ide)
-    Dialog.init(self, nil, {width = 50, height = 7})
+    Dialogs.Dialog.init(self, {width = 50, height = 6})
 
     self._ide = ide
-    self:set_title("Create Project")
 
-    self:set_model({
-        {id = "name", type = "text", label = "Name", key = "n"},
+    self:set_components({
+        Components.Label("Create Project", {col = "50%"}),
+        Components.HLine(),
+        Components.Input("Name", nil, {id = "name", width = "100%"}),
         {
-            {id = "type", type = "select", label = "Type", key = "t", items = self._get_types},
-            {id = "builder", type = "select", label = "Builder", key = "b", items = self._get_builders},
+            Components.Select("Type", nil, {id = "type", width = "50%", items = function() return self:_get_types() end}),
+            Components.Select("Builder", nil, {id = "builder", col = 25, width = "50%", items = function() return self:_get_builders() end}),
         },
-        {id = "folder", type = "folder", label = "Folder", key = "f"},
-        {},
-        {id = "_btncreate", type = "button", label = "Create", key = "<CR>", align = "right", event = self.on_create}
+        Components.Picker("Folder", {id = "folder", width = "100%", onlydirs = true}),
+        Components.Button("Create", {col = -1, event = function() self:on_create() end})
     })
 end
 
 function CreateProjectDialog:on_create()
-    if not self:check_required() then
+    if not self:validate_model() then
         return
     end
 
-    local ok, ProjectType = pcall(require, string.format("ide.projects.%s", self.data.type))
+    local ok, ProjectType = pcall(require, string.format("ide.projects.%s", self.model.type))
+
     if not ok then
         error(ProjectType)
         return
     end
 
-    local p = ProjectType(self._ide.config, self.data.folder, self.data.name, self.data.builder)
-    self._ide.projects[self.data.folder] = p
-    self._ide.active = self.data.folder
+    local p = ProjectType(self._ide.config, self.model.folder, self.model.name, self.model.builder)
+    self._ide.projects[self.model.folder] = p
+    self._ide.active = self.model.folder
     p:create()
     self._ide:pick_file(p:get_path(true))
     self:close()
 end
 
-function CreateProjectDialog:on_data_changed(data, k, _, _)
+function CreateProjectDialog:on_model_changed(model, k, _, _)
     if k == "type" then
-        data.builder = nil
+        model.builder = nil
     end
 end
 
@@ -57,7 +59,7 @@ function CreateProjectDialog:_get_features(...)
 end
 
 function CreateProjectDialog:_get_builders()
-    return self.data.type and self:_get_features("projects", self.data.type, "builders") or { }
+    return self.model.type and self:_get_features("projects", self.model.type, "builders") or { }
 end
 
 function CreateProjectDialog:_get_types()

@@ -8,14 +8,42 @@ function M.class(base)
     local MT = {
         __index = base or nil,
         __call = function(self, ...)
-            if type(self.init) == "function" then
-                self:init(...)
+            local inst = setmetatable({class = self}, {__index = self})
+
+            if type(inst.init) == "function" then
+                inst:init(...)
             end
-            return self
+
+            return inst
         end
     }
 
-    return setmetatable({ }, MT)
+    return setmetatable({
+        super = base,
+        instanceof = function(self, c)
+            if not c then
+                error("Invalid Class Type")
+            end
+
+            if type(c) ~= "table" then
+                error("Expected 'table', got '" .. type(c) .. "'")
+            end
+
+            if self.class == c then
+                return true
+            end
+
+            if not self.super then
+                return false
+            end
+
+            if self.super == c then
+                return true
+            end
+
+            return self.super.instanceof and self.super:instanceof(c) or false
+        end
+    }, MT)
 end
 
 function M.get_number_of_cores()
