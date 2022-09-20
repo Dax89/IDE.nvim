@@ -33,12 +33,12 @@ function Dialog:show()
 end
 
 function Dialog:close()
+    self:_destroy()
+
     if self.hwin then
         vim.api.nvim_win_close(self.hwin, true)
         self.hwin = nil
     end
-
-    self:_destroy()
 end
 
 function Dialog:on_escape()
