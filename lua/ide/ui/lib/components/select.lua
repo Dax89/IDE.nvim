@@ -71,7 +71,7 @@ function Select:on_event(e)
         if choice then
             local oldvalue = self._value
             self:set_value(choice.value or choice)
-            vim.F.npcall(self._change(self, choice.value or choice, oldvalue))
+            vim.F.npcall(self._change, self, choice.value or choice, oldvalue)
             e.update()
         end
     end)
