@@ -36,7 +36,10 @@ function Dialog:close()
     self:_destroy()
 
     if self.hwin then
-        vim.api.nvim_win_close(self.hwin, true)
+        if vim.api.nvim_win_is_valid(self.hwin) then
+            vim.api.nvim_win_close(self.hwin, true)
+        end
+
         self.hwin = nil
     end
 end

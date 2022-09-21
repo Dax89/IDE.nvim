@@ -72,7 +72,7 @@ function Project:get_name()
 end
 
 function Project:get_type()
-    return nil
+    error("Project:get_type() is abstract")
 end
 
 function Project:is_virtual()

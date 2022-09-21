@@ -6,12 +6,14 @@ local CMake = Utils.class(Builder)
 CMake.BUILD_MODES = {"Debug", "Release", "RelWithDebInfo", "MinSizeRel"}
 CMake.API_VERSION = "v1"
 
+function CMake:get_type()
+    return "cmake"
+end
+
 function CMake:on_ready()
     if not self.project:get_mode() then
         self.project:set_mode(CMake.BUILD_MODES[1])
     end
-
-    self:_configure()
 end
 
 function CMake:_write_query(q)
@@ -33,7 +35,11 @@ function CMake:_read_query(q)
     return nil
 end
 
-function CMake:_get_targets()
+function CMake:get_modes()
+    return CMake.BUILD_MODES;
+end
+
+function CMake:get_targets()
     local codemodel = self:_read_query("codemodel-v2")
 
     if codemodel and codemodel.configurations and not vim.tbl_isempty(codemodel.configurations) then
@@ -64,7 +70,7 @@ function CMake:_select_mode(cb)
 end
 
 function CMake:_select_target(cb)
-    local targets = self:_get_targets()
+    local targets = self:get_targets()
     local currtarget = self.project:get_option("target")
 
     vim.ui.select(targets, {
@@ -98,7 +104,7 @@ function CMake:_configure(options)
     end
 
     if not self.project:get_option("target") then
-        local targets = self:_get_targets()
+        local targets = self:get_targets()
         if not vim.tbl_isempty(targets) then
             self.project:set_option("target", targets[1])
             self.project:write()
@@ -180,18 +186,6 @@ function CMake:debug(options)
         type = "codelldb",
         program = tostring(Path:new(self.project:get_build_path(true), self.project:get_option("target"))),
     }, options)
-end
-
-function CMake:settings()
-    vim.ui.select({"Select Mode", "Select Target"}, {
-        prompt = "CMake Project Settings"
-    }, function(_, idx)
-        if idx == 1 then
-            self:_select_mode()
-        elseif idx == 2 then
-            self:_select_target()
-        end
-    end)
 end
 
 return CMake

@@ -25,7 +25,16 @@ function Canvas:init(options)
 end
 
 function Canvas:_reset_model()
-    return setmetatable({_data = { }, _components = { }}, {
+    return setmetatable({
+        _data = { },
+        _components = { },
+        add_component = function(m, c)
+            m._components[c.id] = c
+        end,
+        get_component = function(m, id)
+            return m._components[id]
+        end
+    }, {
         __index = function(t, k)
             return rawget(t, "_data")[k]
         end,
@@ -33,7 +42,7 @@ function Canvas:_reset_model()
             local oldv = rawget(t._data, k)
             if oldv ~= v then
                 rawset(t._data, k, v)
-                t._components[k]:set_value(v)
+                t:get_component(k):set_value(v)
                 self:on_model_changed(t, k, v, oldv)
                 self:render()
             end
@@ -142,6 +151,10 @@ function Canvas:event(type, row, col)
     end
 end
 
+function Canvas:get_component(id)
+    return self.model:get_component(id)
+end
+
 function Canvas:set_components(components)
     self._components = { }
     self.model = self:_reset_model()
@@ -159,8 +172,8 @@ function Canvas:set_components(components)
                     error("Duplicate id '" .. c.id .. "'")
                 end
 
+                self.model:add_component(c)
                 self.model[c.id] = c:get_value()
-                self.model._components[c.id] = c
             end
         end
     end

@@ -4,6 +4,10 @@ local Builder = require("ide.base.builder")
 
 local Node = Utils.class(Builder)
 
+function Node:get_type()
+    return "node"
+end
+
 function Node:create()
     self.project:execute("npm", {"init", "-y"}, {src = true})
 
@@ -16,9 +20,6 @@ function Node:create()
     local p = Utils.read_json(packagepath)
     p.name = self.project:get_name()
     Utils.write_json(packagepath, p)
-end
-
-function Node:settings()
 end
 
 return Node

@@ -23,7 +23,7 @@ function Input:_update_width()
     end
 
     if self._value then
-        w = w + string.format(self._format, self._value)
+        w = w + #string.format(self._format, self._value)
     end
 
     self.width = w
