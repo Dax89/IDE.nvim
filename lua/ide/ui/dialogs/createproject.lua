@@ -12,12 +12,12 @@ function CreateProjectDialog:init(ide)
     self:set_components({
         Components.Label("Create Project", {width = "100%", align = "center"}),
         Components.HLine(),
-        Components.Input("Name", nil, {id = "name", width = "100%"}),
+        Components.Input("Name:", nil, {id = "name", width = "100%"}),
         {
-            Components.Select("Type", nil, {id = "type", width = "50%", items = function() return self:_get_types() end}),
-            Components.Select("Builder", nil, {id = "builder", col = "50%", width = "50%", items = function() return self:_get_builders() end}),
+            Components.Select("Type:", nil, {id = "type", width = "50%", items = function() return self:_get_types() end}),
+            Components.Select("Builder:", nil, {id = "builder", col = "50%", width = "50%", items = function() return self:_get_builders() end}),
         },
-        Components.Picker("Folder", {id = "folder", width = "100%", onlydirs = true}),
+        Components.Picker("Folder:", {id = "folder", width = "100%", onlydirs = true}),
         Components.Button("Create", {col = -1, event = function() self:on_create() end})
     })
 end

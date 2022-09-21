@@ -15,7 +15,7 @@ function Select:init(label, value, options)
 end
 
 function Select:_default_format_item(item)
-    if self.value and item == self._value then
+    if self._value and item == self._value then
         return (item.text or item) .. " - SELECTED"
     end
 

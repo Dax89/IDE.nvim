@@ -147,7 +147,7 @@ function Canvas:event(type, row, col)
             end
         }
 
-        c["on_" .. type](c, e)
+        vim.F.npcall(c["on_" .. type], c, e)
     end
 end
 

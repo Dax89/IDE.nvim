@@ -14,7 +14,7 @@ function CMakeSettings:init(builder)
         Components.Label(self._project:get_name() .. " - Settings", {width = "100%", align = "center"}),
         Components.HLine(),
         {
-            Components.Select("Mode", self._project:get_mode(), {
+            Components.Select("Mode:", self._project:get_mode(), {
                 id = "mode",
                 width = "50%",
                 change = function(_, v)
@@ -23,7 +23,7 @@ function CMakeSettings:init(builder)
                 items = function()
                     return self._builder:get_modes()
                 end}),
-            Components.Select("Target", self._project:get_option("target"), {
+            Components.Select("Target:", self._project:get_option("target"), {
                 id = "target",
                 col = "50%",
                 width = "50%",
