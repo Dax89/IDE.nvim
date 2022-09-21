@@ -15,11 +15,11 @@ function Select:init(label, value, options)
 end
 
 function Select:_default_format_item(item)
-    if item == self._value then
+    if self.value and item == self._value then
         return (item.text or item) .. " - SELECTED"
     end
 
-    return item.text or item
+    return item and item.text or item
 end
 
 function Select:_find_selected(items)
@@ -51,7 +51,7 @@ function Select:on_event(e)
 
     local idx = self:_find_selected(items) -- Make selected item first
 
-    if idx then
+    if idx ~= 0 then
         table.insert(items, 1, table.remove(items, idx))
     end
 

@@ -10,7 +10,7 @@ end
 function Javascript.check(filepath, config)
     return Javascript.guess_project(filepath, "javascript", {
         patterns = {
-            ["package.json"] = { builder = "node"}
+            ["package.json"] = {builder = "node"}
         }
     }, config)
 end
