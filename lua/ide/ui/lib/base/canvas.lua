@@ -187,7 +187,7 @@ function Canvas:_calc_coord(p, v)
     end
 
     if vim.endswith(p, "%") then
-        return math.floor(v * tonumber(p:sub(0, -2)) / 100)
+        return math.floor((v * tonumber(p:sub(0, -2))) / 100)
     end
 
     error("Unsupported coordinate: '" .. p .. "'")
@@ -200,17 +200,17 @@ function Canvas:calc_col(c)
         v = self:get_width() + v - w + 1
     end
 
-    return self:_calc_coord(v, self:get_width() - w)
+    return self:_calc_coord(v, self:get_width())
 end
 
 function Canvas:calc_row(c)
     local v, h = c.row, self:calc_height(c)
 
     if type(v) == "number" and v < 0 then
-        v = self:get_height() - v + 1
+        v = self:get_height() - h + 1
     end
 
-    return self:_calc_coord(v, self:get_height() - h)
+    return self:_calc_coord(v, self:get_height())
 end
 
 function Canvas:calc_width(c)

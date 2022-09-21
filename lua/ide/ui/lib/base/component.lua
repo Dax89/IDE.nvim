@@ -16,6 +16,21 @@ function Component:init(options)
     self.foreground = options.foreground
 end
 
+function Component:_aligned_text(text, canvas)
+    local len, w = #text, canvas:calc_width(self)
+    local pad, s = string.rep(" ", math.max(math.ceil((w - len)), 0)), ""
+
+    if self._align == "center" then
+        s = pad:sub(0, #pad / 2) .. text .. pad:sub(0, #pad / 2)
+    elseif self._align == "right" then
+        s = pad .. text
+    else
+        s = text .. pad
+    end
+
+    return s
+end
+
 function Component:set_value(v)
 end
 
