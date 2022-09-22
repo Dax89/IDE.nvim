@@ -9,8 +9,9 @@ function Canvas:init(options)
     self.hgrp = vim.api.nvim_create_augroup("canvas_agroup_" .. tostring(self.hbuf), {})
 
     self._dblclick = false
-    self._data = { }
+    self._extmarks = { }
     self._components = { }
+    self._data = { }
     self.model = self:_reset_model()
 
     vim.api.nvim_buf_set_option(self.hbuf, "bufhidden", "wipe")
@@ -66,6 +67,28 @@ function Canvas:validate_model(keys)
     return true
 end
 
+function Canvas:on_help()
+    if not vim.tbl_isempty(self._extmarks) then
+        for _, id in ipairs(self._extmarks) do
+            vim.api.nvim_buf_del_extmark(self.hbuf, self.hns, id)
+        end
+
+        self._extmarks = { }
+        return
+    end
+
+    for _, c in ipairs(self._components) do
+        if c.key then
+            local row, col = self:calc_row(c), self:calc_col(c)
+
+            table.insert(self._extmarks, vim.api.nvim_buf_set_extmark(self.hbuf, self.hns, row, col, {
+                virt_text = {{c.key, "ErrorMsg"}},
+                virt_text_pos = "overlay"
+            }))
+        end
+    end
+end
+
 function Canvas:on_escape()
 end
 
@@ -79,35 +102,51 @@ function Canvas:on_doubleclick()
 end
 
 function Canvas:_create_mapping()
-    local function send(t)
+    local function _send(t)
         local cursor = vim.api.nvim_win_get_cursor(self.hwin)
-        self:event(t, cursor[1], cursor[2])
+        self:event_at(t, cursor[1], cursor[2])
     end
 
+    self:map("h", function()
+        if self.options.showhelp ~= false then
+            self:on_help()
+        end
+    end)
+
     self:map("<ESC>", function()
-        send("escape")
+        _send("escape")
     end)
 
     self:map("<CR>", function()
-        send("event")
+        _send("event")
     end)
 
     self:map("<LeftRelease>", function()
         if self._dblclick then
             self._dblclick = false
         else
-            send("click")
+            _send("click")
         end
     end)
 
     self:map("<2-LeftMouse>", function()
         self._dblclick = true
-        send("doubleclick")
+        _send("doubleclick")
     end)
 end
 
 function Canvas:map(key, v, options)
     vim.keymap.set("n", key, v, vim.tbl_extend("force", options or { }, {buffer = self.hbuf}))
+end
+
+function Canvas:_unmap_all()
+    for _, c in ipairs(self._components) do
+        if c.key then
+            vim.keymaps.del("n", c.key, {
+                buffer = self.hbuf
+            })
+        end
+    end
 end
 
 function Canvas:_find_component(row, col)
@@ -130,25 +169,37 @@ function Canvas:_find_component(row, col)
     return nil
 end
 
-function Canvas:event(type, row, col)
-    self["on_" .. type](self)
+function Canvas:event_at(type, row, col)
     local c = self:_find_component(row, col)
 
     if c then
-        local e = {
-            sender = self,
-            row = row,
-            col = col,
-
-            update = function()
-                if c.id then
-                    self.model[c.id] = c:get_value()
-                end
-            end
-        }
-
-        vim.F.npcall(c["on_" .. type], c, e)
+        self:event(c, type, row, col)
+    else
+        self["on_" .. type](self)
     end
+end
+
+function Canvas:event(c, type, row, col)
+    self["on_" .. type](self)
+
+    if not row or not col then
+        local cursor = vim.api.nvim_win_get_cursor(self.hwin)
+        row, col = cursor[1], cursor[1]
+    end
+
+    local e = {
+        sender = self,
+        row = row,
+        col = col,
+
+        update = function()
+            if c.id then
+                self.model[c.id] = c:get_value()
+            end
+        end
+    }
+
+    vim.F.npcall(c["on_" .. type], c, e)
 end
 
 function Canvas:get_component(id)
@@ -156,9 +207,19 @@ function Canvas:get_component(id)
 end
 
 function Canvas:set_components(components)
+    local RESERVED_KEYS = {
+        ["<2-LeftMouse>"] = true,
+        ["<LeftRelease>"] = true,
+        ["<ESC>"] = true,
+        ["<CR>"] = true,
+        ["h"] = true
+    }
+
+    self._extmarks = { }
     self._components = { }
     self.model = self:_reset_model()
     self:clear()
+    self:_unmap_all()
 
     for i, row in ipairs(components) do
         local cl = vim.tbl_islist(row) and row or {row}
@@ -174,6 +235,14 @@ function Canvas:set_components(components)
 
                 self.model:add_component(c)
                 self.model[c.id] = c:get_value()
+
+                if c.key then
+                    if RESERVED_KEYS[c.key] then
+                        error("Key '" .. c.key .. "' is reserved")
+                    end
+
+                    self:map(c.key, function() self:event(c, "event") end)
+                end
             end
         end
     end

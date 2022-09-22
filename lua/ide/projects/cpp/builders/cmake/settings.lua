@@ -14,6 +14,7 @@ function CMakeSettings:init(builder)
         {
             Components.Select("Mode:", self._project:get_mode(), {
                 id = "mode",
+                key = "m",
                 width = "50%",
                 change = function(_, v)
                     self._project:set_mode(v)
@@ -23,6 +24,7 @@ function CMakeSettings:init(builder)
                 end}),
             Components.Select("Target:", self._project:get_option("target"), {
                 id = "target",
+                key = "t",
                 col = "50%",
                 width = "50%",
                 change = function(_, v)

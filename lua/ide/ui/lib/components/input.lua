@@ -16,14 +16,18 @@ function Input:init(label, value, options)
 end
 
 function Input:_update_width()
-    local w = 0
+    local w, UTF8 = 0, require("ide.ui.lib.utils.utf8")
+
+    if self._icon then
+        w = UTF8.len(self._icon)
+    end
 
     if self._label then
-        w = #self._label
+        w = w + UTF8.len(self._label)
     end
 
     if self._value then
-        w = w + #string.format(self._format, self._value)
+        w = w + UTF8.len(string.format(self._format, self._value))
     end
 
     self.width = w

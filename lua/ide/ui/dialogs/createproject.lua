@@ -10,13 +10,13 @@ function CreateProjectDialog:init(ide)
     self._ide = ide
 
     self:set_components({
-        Components.Input("Name:", nil, {id = "name", width = "100%"}),
+        Components.Input("Name:", nil, {key = "n", help = "Set Name", id = "name", width = "100%"}),
         {
-            Components.Select("Type:", nil, {id = "type", width = "50%", items = function() return self:_get_types() end}),
-            Components.Select("Builder:", nil, {id = "builder", col = "50%", width = "50%", items = function() return self:_get_builders() end}),
+            Components.Select("Type:", nil, {key = "t", help = "Set Type", id = "type", width = "50%", items = function() return self:_get_types() end}),
+            Components.Select("Builder:", nil, {key = "b", help = "Set Builder", id = "builder", col = "50%", width = "50%", items = function() return self:_get_builders() end}),
         },
-        Components.Picker("Folder:", {id = "folder", width = "100%", onlydirs = true}),
-        Components.Button("Create", {col = -1, event = function() self:on_create() end})
+        Components.Picker("Folder:", {key = "f", help = "Set Folder", id = "folder", width = "100%", onlydirs = true}),
+        Components.Button("Create", {key = "c", help = "Create Project", col = -1, event = function() self:on_create() end})
     })
 end
 

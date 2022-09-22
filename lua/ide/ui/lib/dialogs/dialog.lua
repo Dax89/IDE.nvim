@@ -18,15 +18,21 @@ function Dialog:init(title, options)
 end
 
 function Dialog:set_components(components)
-    local c = components
+    local hidx, c, Components = 1, components, require("ide.ui.lib.components")
 
     if self._title then
-        local Components = require("ide.ui.lib.components")
-
         c = vim.list_extend({
-            Components.Label("Create Project", {width = "100%", align = "center"}),
+            Components.Label(self._title, {width = "100%", align = "center", foreground = "Title"}),
             Components.HLine(),
         }, components)
+
+        hidx = 2
+    end
+
+    if self.options.showhelp ~= false then
+        table.insert(c, hidx, {
+            Components.Label("Press 'h' for Help", {width = "100%", align = "center", foreground = "Comment"})
+        })
     end
 
     if not self.options.height then
@@ -38,11 +44,23 @@ end
 
 function Dialog:show()
     if not self.hwin then
+        if vim.tbl_isempty(self._components) then
+            self:set_components({})
+        end
 
         self.options.row = (vim.o.lines - self.options.height) / 2
         self.options.col = (vim.o.columns - self.options.width) / 2
 
-        self.hwin = vim.api.nvim_open_win(self.hbuf, true, self.options)
+        self.hwin = vim.api.nvim_open_win(self.hbuf, true, {
+            border = self.options.border,
+            style = self.options.style,
+            relative = self.options.relative,
+            row = self.options.row,
+            col = self.options.col,
+            width = self.options.width,
+            height = self.options.height,
+        })
+
         vim.api.nvim_win_set_option(self.hwin, "sidescrolloff", 0)
         vim.api.nvim_win_set_option(self.hwin, "scrolloff", 0)
         vim.api.nvim_win_set_option(self.hwin, "wrap", false)
