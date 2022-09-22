@@ -5,14 +5,12 @@ local Components = require("ide.ui.lib.components")
 local CMakeSettings = Utils.class(Dialogs.Dialog)
 
 function CMakeSettings:init(builder)
-    Dialogs.Dialog.init(self, {width = 50, height = 5})
-
     self._builder = builder
     self._project = builder.project
 
+    Dialogs.Dialog.init(self, self._project:get_name() .. " - Settings", {width = 50})
+
     self:set_components({
-        Components.Label(self._project:get_name() .. " - Settings", {width = "100%", align = "center"}),
-        Components.HLine(),
         {
             Components.Select("Mode:", self._project:get_mode(), {
                 id = "mode",

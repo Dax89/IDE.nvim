@@ -9,7 +9,7 @@ function Canvas:init(options)
     self.hgrp = vim.api.nvim_create_augroup("canvas_agroup_" .. tostring(self.hbuf), {})
 
     self._dblclick = false
-    self._data = self:_blank()
+    self._data = { }
     self._components = { }
     self.model = self:_reset_model()
 

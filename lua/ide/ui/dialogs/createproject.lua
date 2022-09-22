@@ -5,13 +5,11 @@ local Dialogs = require("ide.ui.lib.dialogs")
 local CreateProjectDialog = Utils.class(Dialogs.Dialog)
 
 function CreateProjectDialog:init(ide)
-    Dialogs.Dialog.init(self, {width = 50, height = 6})
+    Dialogs.Dialog.init(self, "Create Project", {width = 50})
 
     self._ide = ide
 
     self:set_components({
-        Components.Label("Create Project", {width = "100%", align = "center"}),
-        Components.HLine(),
         Components.Input("Name:", nil, {id = "name", width = "100%"}),
         {
             Components.Select("Type:", nil, {id = "type", width = "50%", items = function() return self:_get_types() end}),
