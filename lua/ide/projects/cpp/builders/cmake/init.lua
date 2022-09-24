@@ -36,7 +36,7 @@ function CMake:_read_query(q)
 end
 
 function CMake:get_modes()
-    return CMake.BUILD_MODES;
+    return CMake.BUILD_MODES
 end
 
 function CMake:get_targets()
