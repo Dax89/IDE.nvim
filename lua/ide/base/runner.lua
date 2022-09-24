@@ -38,7 +38,7 @@ function Runner:_execute(command, args, cwd, options)
 
     options = options or { }
 
-    return Job:new({
+    local res, code = Job:new({
         command = command,
         args = args,
         cwd = cwd,
@@ -55,6 +55,16 @@ function Runner:_execute(command, args, cwd, options)
             end
         end
     }):sync()
+
+    if options.json then
+        if code ~= 0 then
+            return nil, code
+        end
+
+        res = vim.json.decode(table.concat(res, "\n")) -- NOTE: Multiline Output?
+    end
+
+    return res, code
 end
 
 function Runner:cancel()
