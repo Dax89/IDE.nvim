@@ -49,7 +49,7 @@ end
 
 function Project:execute(command, args, options)
     options = options or { }
-    return self:_execute(command, args, options.src and self:get_path(true) or self:get_build_path(true))
+    return self:_execute(command, args, options.src and self:get_path(true) or self:get_build_path(true), options)
 end
 
 function Project:new_job(command, args, options)

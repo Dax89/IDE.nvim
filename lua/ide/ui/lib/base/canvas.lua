@@ -136,7 +136,10 @@ function Canvas:_create_mapping()
 end
 
 function Canvas:map(key, v, options)
-    vim.keymap.set("n", key, v, vim.tbl_extend("force", options or { }, {buffer = self.hbuf}))
+    vim.keymap.set("n", key, v, vim.tbl_extend("force", options or { }, {
+        nowait = true,
+        buffer = self.hbuf
+    }))
 end
 
 function Canvas:_unmap_all()
@@ -199,7 +202,9 @@ function Canvas:event(c, type, row, col)
         end
     }
 
-    vim.F.npcall(c["on_" .. type], c, e)
+    if vim.is_callable(c["on_" .. type]) then
+        c["on_" .. type](c, e)
+    end
 end
 
 function Canvas:get_component(id)
