@@ -30,9 +30,6 @@ end
 function Builder:create()
 end
 
-function Builder:stop()
-end
-
 function Builder:settings()
     local ok, d = pcall(require, "ide.projects." .. self.project:get_type() ..
                                  ".builders." .. self:get_type() ..

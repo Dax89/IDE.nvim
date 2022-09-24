@@ -117,13 +117,6 @@ function CMake:configure()
     self:_configure()
 end
 
-function CMake:stop()
-    if self._runjob then
-        self._runjob:shutdown()
-        self._runjob = nil
-    end
-end
-
 function CMake:build(target)
     local args = {
         "--build", ".",
@@ -135,7 +128,7 @@ function CMake:build(target)
         args = vim.tbl_extend(args, {"--target", target})
     end
 
-    self._runjob = self.project:new_job("cmake", args, {title = "CMake - Build", state = "build"})
+    self.project:new_job("cmake", args, {title = "CMake - Build", state = "build"})
 end
 
 function CMake:run()

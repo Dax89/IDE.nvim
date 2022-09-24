@@ -238,9 +238,30 @@ function Project:configure()
 end
 
 function Project:stop()
-    if self.builder then
-        self.builder:stop()
+    if vim.tbl_isempty(self.jobs) then
+        return
     end
+
+    -- NOTE: Kill Workaround -> https://github.com/nvim-lua/plenary.nvim/issues/156
+    if #self.jobs == 1 then
+        vim.loop.kill(self.jobs[1][1].pid, 9)
+        return
+    end
+
+    vim.ui.select(self.jobs, {
+        prompt = "Stop Job",
+        format_item = function(job)
+            if job[2].title then
+                return tostring(job[1].pid) .. ": " .. job[2].title
+            end
+
+            return tostring(job[1].pid) .. ": " .. job[1].command .. " " .. table.concat(job[1].args, " ")
+        end
+    }, function(choice)
+        if choice then
+            vim.loop.kill(choice[1].pid, 9)
+        end
+    end)
 end
 
 function Project:build()

@@ -94,7 +94,7 @@ function Runner:_new_job(command, args, cwd, options)
                 self:set_state(options.state)
             end
 
-            table.insert(self.jobs, job)
+            table.insert(self.jobs, {job, options})
         end),
 
         on_stdout = vim.schedule_wrap(function(_, data)
@@ -118,7 +118,7 @@ function Runner:_new_job(command, args, cwd, options)
         on_exit = vim.schedule_wrap(function(job, code)
             vim.fn.setqflist({}, "a", {
                 title = options.title,
-                lines = {">>> " .. " Terminated with code " .. code}
+                lines = {">>> " .. " Terminated with code " .. tostring(code)}
             })
 
             vim.api.nvim_command("cbottom")
@@ -128,7 +128,7 @@ function Runner:_new_job(command, args, cwd, options)
             end
 
             self.jobs = vim.tbl_filter(function(item)
-                return item ~= job
+                return item[1] ~= job
             end, self.jobs)
         end)
     })
