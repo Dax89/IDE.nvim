@@ -16,15 +16,15 @@ function Builder:rebuild()
 end
 
 function Builder:configure()
-    self.project:get_build_path():mkdir()
+    self.project:get_build_path():mkdir({parents = true, exists_ok = true})
 end
 
 function Builder:build()
-    self.project:get_build_path():mkdir()
+    self.project:get_build_path():mkdir({parents = true, exists_ok = true})
 end
 
 function Builder:debug(_)
-    self.project:get_build_path():mkdir()
+    self.project:get_build_path():mkdir({parents = true, exists_ok = true})
 end
 
 function Builder:create()
