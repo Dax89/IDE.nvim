@@ -140,6 +140,8 @@ function Runner:_new_job(command, args, cwd, options)
             self.jobs = vim.tbl_filter(function(item)
                 return item[1] ~= job
             end, self.jobs)
+
+            vim.F.npcall(options.onexit, self, code)
         end)
     })
 

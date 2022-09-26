@@ -101,4 +101,16 @@ function M.list_reverse(l)
     return rev
 end
 
+function M.notify(s, category, options)
+    options = options or { }
+
+    local ok, notify = pcall(require, "notify")
+
+    if ok then
+        notify(s, category, options or { })
+    else
+        vim.notify(s, category)
+    end
+end
+
 return M

@@ -5,9 +5,9 @@ local Dialogs = require("ide.ui.lib.dialogs")
 local CreateProjectDialog = Utils.class(Dialogs.Dialog)
 
 function CreateProjectDialog:init(ide)
-    Dialogs.Dialog.init(self, "Create Project", {width = 50})
-
     self._ide = ide
+
+    Dialogs.Dialog.init(self, "Create Project", {width = 50})
 
     self:set_components({
         Components.Input("Name:", nil, {key = "n", id = "name", width = "100%"}),
@@ -16,28 +16,23 @@ function CreateProjectDialog:init(ide)
             Components.Select("Builder:", nil, {key = "b", id = "builder", col = "50%", width = "50%", items = function() return self:_get_builders() end}),
         },
         Components.Picker("Folder:", {key = "f", id = "folder", width = "100%", onlydirs = true}),
-        Components.Button("Create", {key = "c", col = -1, event = function() self:on_create() end})
+        Components.Button("Create", {key = "c", col = -1, event = function() self:accept() end})
     })
 end
 
-function CreateProjectDialog:on_create()
-    if not self:validate_model() then
-        return
-    end
-
-    local ok, ProjectType = pcall(require, string.format("ide.projects.%s", self.model.type))
+function CreateProjectDialog:on_accept(model)
+    local ok, ProjectType = pcall(require, string.format("ide.projects.%s", model.type))
 
     if not ok then
         error(ProjectType)
         return
     end
 
-    local p = ProjectType(self._ide.config, self.model.folder, self.model.name, self.model.builder)
-    self._ide.projects[self.model.folder] = p
-    self._ide.active = self.model.folder
+    local p = ProjectType(self._ide.config, model.folder, model.name, model.builder)
+    self._ide.projects[model.folder] = p
+    self._ide.active = model.folder
     p:create()
     self._ide:pick_file(p:get_path(true))
-    self:close()
 end
 
 function CreateProjectDialog:on_model_changed(model, k, _, _)

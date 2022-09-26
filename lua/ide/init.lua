@@ -127,7 +127,7 @@ end
 
 function IDE:project_create()
     local CreateProjectDialog = require("ide.ui.dialogs.createproject")
-    CreateProjectDialog(self):show()
+    CreateProjectDialog(self):popup()
 end
 
 function IDE:projectconfigure()

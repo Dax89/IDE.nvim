@@ -18,6 +18,7 @@ function Project:init(config, path, name, builder)
         name = name,
         type = self:get_type(),
         mode = nil,
+        target = nil,
         builder = builder,
         options = { }
     }
@@ -99,6 +100,14 @@ end
 
 function Project:get_mode()
     return self.data.mode
+end
+
+function Project:set_target(t)
+    self.data.target = t
+end
+
+function Project:get_target()
+    return self.data.target
 end
 
 function Project:get_template_path()

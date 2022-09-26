@@ -17,7 +17,11 @@ function Cargo:get_modes()
 end
 
 function Cargo:create()
-    self.project:execute("cargo", {"init", "--name", self.project:get_name(), self.project:get_path(true)}, {src = true})
+    local _, code = self.project:execute("cargo", {"init", "--name", self.project:get_name(), self.project:get_path(true)}, {src = true})
+
+    if code ~= 0 then
+        Utils.notify("Cargo: Project creation failed", "error", {title = "ERROR"})
+    end
 end
 
 function Cargo:get_targets()
@@ -33,7 +37,7 @@ function Cargo:build()
 
     local args = {
         "build",
-        "--target-dir", tostring(b)
+        "--target-dir", tostring(b:parent())
     }
 
     local m = self.project:get_mode()
@@ -59,6 +63,14 @@ function Cargo:debug(options)
         type = "codelldb",
         program = tostring(Path:new(self.project:get_build_path(true), self.project:get_option("target"))),
     }, options)
+end
+
+function Builder:settings()
+    local d = require("ide.internal.dialogs")
+
+    d.BuilderDialog(self, {showsave = true}):popup(function()
+        self.project:write()
+    end)
 end
 
 return Cargo

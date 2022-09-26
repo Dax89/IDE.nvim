@@ -31,7 +31,7 @@ function Dialog:set_components(components)
 
     if self.options.showhelp ~= false then
         table.insert(c, hidx, {
-            Components.Label("Press 'h' for Help", {width = "100%", align = "center", foreground = "Comment"})
+            Components.Label("Press '<C-h>' for Help", {width = "100%", align = "center", foreground = "Comment"})
         })
     end
 
@@ -42,8 +42,26 @@ function Dialog:set_components(components)
     Canvas.set_components(self, c)
 end
 
-function Dialog:show()
+function Dialog:accept()
+    if not self:validate_model() then
+        return
+    end
+
+    self:on_accept(self.model)
+
+    if vim.is_callable(self._onaccept) then
+        if self._onaccept(self.model, self) ~= false then
+            self:close()
+        end
+    else
+        self:close()
+    end
+end
+
+function Dialog:popup(cb)
     if not self.hwin then
+        self._onaccept = cb
+
         if vim.tbl_isempty(self._components) then
             self:set_components({})
         end
@@ -80,6 +98,9 @@ function Dialog:close()
 
         self.hwin = nil
     end
+end
+
+function Dialog:on_accept(model)
 end
 
 function Dialog:on_escape()

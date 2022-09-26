@@ -51,42 +51,6 @@ function CMake:get_targets()
     return { }
 end
 
-function CMake:_select_mode(cb)
-    local currmode = self.project:get_mode()
-
-    vim.ui.select(CMake.BUILD_MODES, {
-        prompt = "Select Mode",
-        format_item = function(mode)
-            return currmode == mode and mode .. " - SELECTED" or mode
-        end
-    }, function(mode)
-        if mode then
-            self.project:set_mode(mode)
-            self.project:write()
-            self:_configure({sync = true})
-            vim.F.npcall(cb, mode)
-        end
-    end)
-end
-
-function CMake:_select_target(cb)
-    local targets = self:get_targets()
-    local currtarget = self.project:get_option("target")
-
-    vim.ui.select(targets, {
-        prompt = "Select Target",
-        format_item = function(target)
-            return currtarget == target and target .. " - SELECTED" or target
-        end
-    }, function(target)
-        if target then
-            self.project:set_option("target", target)
-            self.project:write()
-            vim.F.npcall(cb, target)
-        end
-    end)
-end
-
 function CMake:_configure(options)
     options = options or { }
     self:_write_query("codemodel-v2")
@@ -103,10 +67,10 @@ function CMake:_configure(options)
         compilecommands:copy({destination = Path:new(self.project:get_path(), "compile_commands.json" )})
     end
 
-    if not self.project:get_option("target") then
+    if not self.project:get_target() then
         local targets = self:get_targets()
         if not vim.tbl_isempty(targets) then
-            self.project:set_option("target", targets[1])
+            self.project:set_target(targets[1])
             self.project:write()
         end
     end
@@ -117,7 +81,7 @@ function CMake:configure()
     self:_configure()
 end
 
-function CMake:build(target)
+function CMake:build(target, onexit)
     local args = {
         "--build", ".",
         "--config", self.project:get_mode(),
@@ -128,46 +92,20 @@ function CMake:build(target)
         args = vim.tbl_extend(args, {"--target", target})
     end
 
-    self.project:new_job("cmake", args, {title = "CMake - Build", state = "build"})
+    self.project:new_job("cmake", args, {title = "CMake - Build", state = "build", onexit = onexit})
 end
 
 function CMake:run()
-    local mode = self.project:get_mode()
-
-    if not mode then
-        self:_select_mode(function()
-            self:run()
-        end)
-
-        return
-    end
-
-    local target = self.project:get_option("target")
-
-    if target then
+    self:check_settings(function(_, _, target)
         local targetdata = self:_read_query("target-" .. target)
 
-        if not targetdata then
-            return
+        if targetdata then
+            if targetdata.type ~= "EXECUTABLE" then
+                error("Cannot run target of type '" .. targetdata.type .. "'")
+            end
+
+            self:check_and_run(Path:new(self.project:get_build_path(true), targetdata.artifacts[1].path), target)
         end
-
-        if targetdata.type ~= "EXECUTABLE" then
-            error("Cannot run target of type '" .. targetdata.type .. "'")
-        end
-
-        local p = Path:new(self.project:get_build_path(true), targetdata.artifacts[1].path)
-
-        if p:is_file() then
-            self.project:new_job(p, nil, {title = "Run - " .. target, state = "run"})
-        else
-            error("Cannot execute '" .. tostring(p) .. "', file not found")
-        end
-
-        return
-    end
-
-    self:_select_target(function()
-        self:run()
     end)
 end
 

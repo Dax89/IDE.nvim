@@ -107,7 +107,7 @@ function Canvas:_create_mapping()
         self:event_at(t, cursor[1], cursor[2])
     end
 
-    self:map("h", function()
+    self:map("<C-h>", function()
         if self.options.showhelp ~= false then
             self:on_help()
         end
@@ -217,7 +217,7 @@ function Canvas:set_components(components)
         ["<LeftRelease>"] = true,
         ["<ESC>"] = true,
         ["<CR>"] = true,
-        ["h"] = true
+        ["<C-h>"] = true
     }
 
     self._extmarks = { }
