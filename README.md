@@ -6,9 +6,10 @@
 # Installation
 ```lua
 use { "Dax89/ide.nvim",  requires = { {"nvim-lua/plenary.nvim"}
-                                      {"stevearc/dressing.nvim"} -- Improved UI (Optional)
-                                      {"mfussenegger/nvim-dap"}  -- DAP Support (Optional)
-                                      {"rcarriga/nvim-dap-ui"} } -- DAP-UI Support (Optional)
+                                      {"rcarriga/nvim-notify"},   -- Notifications Popup (Optional)
+                                      {"stevearc/dressing.nvim"}, -- Improved UI (Optional)
+                                      {"mfussenegger/nvim-dap"} , -- DAP Support (Optional)
+                                      {"rcarriga/nvim-dap-ui"} }  -- DAP-UI Support (Optional)
 }
 ```
 
