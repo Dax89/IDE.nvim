@@ -81,18 +81,17 @@ function CMake:configure()
     self:_configure()
 end
 
-function CMake:build(target, onexit)
-    local args = {
-        "--build", ".",
-        "--config", self.project:get_mode(),
-        "-j" .. Utils.get_number_of_cores()
-    }
+function CMake:build(_, onexit)
+    self:check_settings(function(_, _, target)
+        local args = {
+            "--build", ".",
+            "--config", self.project:get_mode(),
+            "-j" .. Utils.get_number_of_cores(),
+            "--target", target
+        }
 
-    if type(target) == "string" then
-        args = vim.tbl_extend(args, {"--target", target})
-    end
-
-    self.project:new_job("cmake", args, {title = "CMake - Build", state = "build", onexit = onexit})
+        self.project:new_job("cmake", args, {title = "CMake - Build", state = "build", onexit = onexit})
+    end)
 end
 
 function CMake:run()
@@ -100,11 +99,11 @@ function CMake:run()
         local targetdata = self:_read_query("target-" .. target)
 
         if targetdata then
-            if targetdata.type ~= "EXECUTABLE" then
-                error("Cannot run target of type '" .. targetdata.type .. "'")
+            if targetdata.type == "EXECUTABLE" then
+                self:check_and_run(Path:new(self.project:get_build_path(true), targetdata.artifacts[1].path), target)
+            else
+                Utils.notify("Cannot run target of type '" .. targetdata.type .. "'")
             end
-
-            self:check_and_run(Path:new(self.project:get_build_path(true), targetdata.artifacts[1].path), target)
         end
     end)
 end
