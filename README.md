@@ -1,15 +1,28 @@
-# ide.nvim
-`ide.nvim` is born from parts of my personal NeoVim configuration and it aims to have nice Project Management, Build, and Debug support for various type of programming languages.
-
-<ins>**NOTE:** This plugin is still under development, it can be unstable and API can change!</ins>
+<p align="center">
+  <a href="https://github.com/Dax89/ide.nvim">
+    <img alt="IDE.NVim" height="125" src="https://user-images.githubusercontent.com/1503603/192603647-62424945-9930-4622-95a0-99f1b0bd9543.png">
+  </a>
+  <br>
+  <img src="https://img.shields.io/github/stars/Dax89/ide.nvim?style=for-the-badge">
+  <img src="https://img.shields.io/github/license/Dax89/ide.nvim?style=for-the-badge">
+  <img src="https://img.shields.io/badge/Lua-2C2D72?style=for-the-badge&logo=lua&logoColor=white">
+  <br>
+  <br>
+  Nice Project Management, Build, and Debug support for various type of programming languages.<br>
+  <ins><b>NOTE:</b> This plugin is still under development, it can be unstable and API can change!</ins>
+</p>
 
 # Installation
 ```lua
-use { "Dax89/ide.nvim",  requires = { {"nvim-lua/plenary.nvim"}
-                                      {"rcarriga/nvim-notify"},   -- Notifications Popup (Optional)
-                                      {"stevearc/dressing.nvim"}, -- Improved UI (Optional)
-                                      {"mfussenegger/nvim-dap"} , -- DAP Support (Optional)
-                                      {"rcarriga/nvim-dap-ui"} }  -- DAP-UI Support (Optional)
+use {
+  "Dax89/ide.nvim",  
+  requires = { 
+       {"nvim-lua/plenary.nvim"},
+       {"rcarriga/nvim-notify"},   -- Notifications Popup (Optional)
+       {"stevearc/dressing.nvim"}, -- Improved UI (Optional)
+       {"mfussenegger/nvim-dap"} , -- DAP Support (Optional)
+       {"rcarriga/nvim-dap-ui"},   -- DAP-UI Support (Optional)
+    }
 }
 ```
 
