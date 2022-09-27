@@ -59,12 +59,19 @@ require("ide").setup({
 ```
 
 # Commands
-- *IdeRecentProjects*: Show recent projects
-- *IdeProjectCreate*: Open a dialog which allows to create new projects
-- *IdeProjectWrite*: Save the project in `ide.nvim` format (uses `project_file` from config)
+- `IdeRecentProjects`: Show recent projects
+- `IdeProjectCreate`: Open a dialog which allows to create new projects
+- `IdeProjectWrite`: Save the project in `ide.nvim` format (uses `project_file` from config)
+- `IdeProjectSettings`: Open current project's settings
+- `IdeProjectDebug`: Debug the current project
+- `IdeProjectRun`: Run the current project
+- `IdeProjectConfigure`: Configure the current project
 
 # API
-*Coming Soon!*
+Currently, using `require("ide")` provides these functions:
+- `setup([config])`: Initialize and configure plugin
+- `get_active_project()`: Returns the active project or `nil`
+- `get_projects()`: Returns a list of the loaded projects or `{}`
 
 # Related Projects
 - [projectmgr](https://github.com/charludo/projectmgr.nvim)

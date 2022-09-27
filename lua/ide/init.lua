@@ -130,7 +130,7 @@ function IDE:project_create()
     CreateProjectDialog(self):popup()
 end
 
-function IDE:projectconfigure()
+function IDE:project_configure()
     if self.active then
         self:get_active():configure()
     end
@@ -166,10 +166,12 @@ function IDE:project_write()
     end
 end
 
+local ide = nil
+
 local function setup(config)
     config = vim.tbl_deep_extend("force", require("ide.config"), config or { })
 
-    local ide = IDE(config)
+    ide = IDE(config)
     local groupid = vim.api.nvim_create_augroup("NVimIDE", {clear = true})
 
     vim.api.nvim_create_autocmd("BufEnter", {
@@ -193,6 +195,26 @@ local function setup(config)
         ide:project_write()
     end, { })
 
+    vim.api.nvim_create_user_command("IdeProjectSettings", function()
+        ide:project_settings()
+    end, { })
+
+    vim.api.nvim_create_user_command("IdeProjectDebug", function()
+        ide:project_debug()
+    end, { })
+
+    vim.api.nvim_create_user_command("IdeProjectRun", function()
+        ide:project_run()
+    end, { })
+
+    vim.api.nvim_create_user_command("IdeProjectBuild", function()
+        ide:project_build()
+    end, { })
+
+    vim.api.nvim_create_user_command("IdeProjectConfigure", function()
+        ide:project_configure()
+    end, { })
+
     if type(config.mappings) == "table" then
         for key, cb in pairs(config.mappings) do
             vim.keymap.set("n", key, function()
@@ -206,6 +228,12 @@ local function setup(config)
 end
 
 return {
-    setup = setup
+    setup = setup,
+    get_active_project = function()
+        return ide:get_active()
+    end,
+    get_projects = function()
+        return ide:get_projects()
+    end
 }
 
