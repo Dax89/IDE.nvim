@@ -126,8 +126,8 @@ function IDE:project_check(filepath, filetype)
 end
 
 function IDE:project_create()
-    local CreateProjectDialog = require("ide.ui.dialogs.createproject")
-    CreateProjectDialog(self):popup()
+    local Dialogs = require("ide.internal.dialogs")
+    Dialogs.CreateProjectDialog(self):popup()
 end
 
 function IDE:project_configure()
