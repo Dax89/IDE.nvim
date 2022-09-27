@@ -14,6 +14,7 @@ function Component:init(options)
     self.bold = options.bold or false
     self.background = options.background
     self.foreground = options.foreground
+    self.optional = options.optional == true
 end
 
 function Component:_aligned_text(text, canvas)

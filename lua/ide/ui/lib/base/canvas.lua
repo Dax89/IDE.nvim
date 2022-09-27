@@ -59,7 +59,8 @@ function Canvas:validate_model(keys)
     end
 
     for _, k in ipairs(keys) do
-        if (self.model[k] == nil or self.model[k] == "") then
+        local c = self.model:get_component(k)
+        if c.optional ~= true and (self.model[k] == nil or self.model[k] == "") then
             return false
         end
     end
