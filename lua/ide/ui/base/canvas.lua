@@ -264,7 +264,7 @@ function Canvas:clear()
 end
 
 function Canvas:_distribute(s, w)
-    local UTF8 = require("ide.ui.lib.utils.utf8")
+    local UTF8 = require("ide.ui.utils.utf8")
     local l = UTF8.len(s)
     return l < w and (s .. (" "):rep(w - l)) or s:sub(0, vim.str_byteindex(s, w))
 end
@@ -333,7 +333,7 @@ function Canvas:render()
         error("Cannot find color '" .. h .. "'")
     end
 
-    local UTF8 = require("ide.ui.lib.utils.utf8")
+    local UTF8 = require("ide.ui.utils.utf8")
 
     for _, c in ipairs(self._components) do
         local d = c:render(self)

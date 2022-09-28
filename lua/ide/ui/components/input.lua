@@ -1,5 +1,5 @@
 local Utils = require("ide.utils")
-local Base = require("ide.ui.lib.base")
+local Base = require("ide.ui.base")
 
 local Input = Utils.class(Base.Component)
 
@@ -16,7 +16,7 @@ function Input:init(label, value, options)
 end
 
 function Input:_update_width()
-    local w, UTF8 = 0, require("ide.ui.lib.utils.utf8")
+    local w, UTF8 = 0, require("ide.ui.utils.utf8")
 
     if self._icon then
         w = UTF8.len(self._icon)

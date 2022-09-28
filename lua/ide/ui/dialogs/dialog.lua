@@ -1,5 +1,5 @@
 local Utils = require("ide.utils")
-local Canvas = require("ide.ui.lib.base.canvas")
+local Canvas = require("ide.ui.base.canvas")
 
 local Dialog = Utils.class(Canvas)
 
@@ -18,7 +18,7 @@ function Dialog:init(title, options)
 end
 
 function Dialog:set_components(components)
-    local hidx, c, Components = 1, components, require("ide.ui.lib.components")
+    local hidx, c, Components = 1, components, require("ide.ui.components")
 
     if self._title then
         c = vim.list_extend({

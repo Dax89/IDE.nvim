@@ -1,5 +1,5 @@
 local Utils = require("ide.utils")
-local Input = require("ide.ui.lib.components.input")
+local Input = require("ide.ui.components.input")
 
 local Select = Utils.class(Input)
 

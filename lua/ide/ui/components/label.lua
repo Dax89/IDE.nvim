@@ -1,5 +1,5 @@
 local Utils = require("ide.utils")
-local Base = require("ide.ui.lib.base")
+local Base = require("ide.ui.base")
 
 local Label = Utils.class(Base.Component)
 

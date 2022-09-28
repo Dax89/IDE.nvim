@@ -58,10 +58,10 @@ function IDE:get_projects()
 end
 
 function IDE:pick_file(rootdir)
-    local Picker = require("ide.ui.picker")
+    local PickerDialog = require("ide.ui.dialogs.picker")
     local p = Utils.read_json(Path:new(tostring(rootdir), self.config.project_file))
 
-    Picker.select_file(function(filepath)
+    PickerDialog.select_file(function(filepath)
         self:project_check(filepath, p.type)
         vim.api.nvim_command(":e " .. tostring(filepath))
 

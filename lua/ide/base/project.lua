@@ -1,6 +1,6 @@
 local Utils = require("ide.utils")
 local Path = require("plenary.path")
-local Runner = require "ide.base.runner"
+local Runner = require("ide.base.runner")
 
 local Project = Utils.class(Runner)
 

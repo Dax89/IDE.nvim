@@ -50,16 +50,16 @@ local function select_item(path, onchoice, options, level)
     end)
 end
 
-local Picker = { }
+local PickerDialog = { }
 
-function Picker.select_folder(onchoice, options)
+function PickerDialog.select_folder(onchoice, options)
     options = options or { }
     select_item(Path:new(options.cwd or vim.loop.os_homedir()), onchoice, vim.tbl_extend("force", options, {only_dirs = true}))
 end
 
-function Picker.select_file(onchoice, options)
+function PickerDialog.select_file(onchoice, options)
     options = options or { }
     select_item(Path:new(options.cwd or vim.loop.os_homedir()), onchoice, vim.tbl_extend("force", options, {add_dirs = true}))
 end
 
-return Picker
+return PickerDialog

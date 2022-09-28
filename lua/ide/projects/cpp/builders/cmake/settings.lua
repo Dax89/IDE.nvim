@@ -1,6 +1,6 @@
 local Utils = require("ide.utils")
 local Dialogs = require("ide.internal.dialogs")
-local Components = require("ide.ui.lib.components")
+local Components = require("ide.ui.components")
 
 local CMakeSettings = Utils.class(Dialogs.BuilderDialog)
 

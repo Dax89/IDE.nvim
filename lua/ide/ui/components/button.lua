@@ -1,5 +1,5 @@
 local Utils = require("ide.utils")
-local Label = require("ide.ui.lib.components.label")
+local Label = require("ide.ui.components.label")
 
 local Button = Utils.class(Label)
 

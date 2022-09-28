@@ -1,5 +1,5 @@
 local Utils = require("ide.utils")
-local Input = require("ide.ui.lib.components.input")
+local Input = require("ide.ui.components.input")
 
 local Picker = Utils.class(Input)
 
@@ -12,8 +12,8 @@ function Picker:init(text, options)
 end
 
 function Picker:on_event(e)
-    local PickerView = require("ide.ui.picker")
-    local fn = self._onlydirs == true and PickerView.select_folder or PickerView.select_file
+    local PickerDialog = require("ide.ui.dialogs.picker")
+    local fn = self._onlydirs == true and PickerDialog.select_folder or PickerDialog.select_file
 
     fn(function(choice)
         self:set_value(tostring(choice))

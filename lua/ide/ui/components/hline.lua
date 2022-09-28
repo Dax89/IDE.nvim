@@ -1,5 +1,5 @@
 local Utils = require("ide.utils")
-local Base = require("ide.ui.lib.base")
+local Base = require("ide.ui.base")
 
 local HLine = Utils.class(Base.Component)
 
@@ -10,7 +10,7 @@ function HLine:init(options)
 end
 
 function HLine:render(canvas)
-    local UTF8 = require("ide.ui.lib.utils.utf8")
+    local UTF8 = require("ide.ui.utils.utf8")
     return UTF8.rep("⎯", canvas:calc_width(self))
 end
 

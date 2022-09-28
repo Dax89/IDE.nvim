@@ -1,6 +1,6 @@
 local Utils = require("ide.utils")
-local Dialogs = require("ide.ui.lib.dialogs")
-local Components = require("ide.ui.lib.components")
+local Dialogs = require("ide.ui.dialogs")
+local Components = require("ide.ui.components")
 
 local BuilderDialog = Utils.class(Dialogs.Dialog)
 
