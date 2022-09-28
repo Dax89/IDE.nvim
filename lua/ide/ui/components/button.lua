@@ -5,8 +5,8 @@ local Button = Utils.class(Label)
 
 function Button:init(text, options)
     options = options or { }
-    options.background = options.background or "CurSearch"
-    options.foreground = options.foreground or "CurSearch"
+    options.background = options.background or "primary"
+    options.foreground = options.foreground or "primary"
     self._event = options.event
     Label.init(self, " " .. text .. " ", options)
 end

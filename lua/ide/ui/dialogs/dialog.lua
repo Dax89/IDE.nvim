@@ -13,7 +13,7 @@ function Dialog:set_components(components)
 
     if self._title then
         c = vim.list_extend({
-            Components.Label(self._title, {width = "100%", align = "center", foreground = "Title"}),
+            Components.Label(self._title, {width = "100%", align = "center", foreground = "accent"}),
             Components.HLine(),
         }, components)
 
@@ -22,7 +22,7 @@ function Dialog:set_components(components)
 
     if self.options.showhelp ~= false then
         table.insert(c, hidx, {
-            Components.Label("Press '<C-h>' for Help", {width = "100%", align = "center", foreground = "Comment"})
+            Components.Label("Press '<C-h>' for Help", {width = "100%", align = "center", foreground = "secondary"})
         })
     end
 

@@ -313,6 +313,8 @@ function Canvas:calc_height(c)
 end
 
 function Canvas:render()
+    local Theme = require("ide.ui.theme")
+
     local function hl(h, t)
         if not h then
             return nil
@@ -326,6 +328,7 @@ function Canvas:render()
             t = {t}
         end
 
+        h = Theme.get_color(h)
         local hln = vim.api.nvim_get_hl_by_name(h, true)
 
         for _, ct in ipairs(t) do
