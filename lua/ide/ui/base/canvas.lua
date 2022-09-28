@@ -34,6 +34,9 @@ function Canvas:_reset_model()
         end,
         get_component = function(m, id)
             return m._components[id]
+        end,
+        get_data = function(m)
+            return m._data
         end
     }, {
         __index = function(t, k)
