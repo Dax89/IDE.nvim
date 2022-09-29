@@ -283,7 +283,7 @@ function Project:stop()
 end
 
 function Project:build()
-    if self.builder then
+    if not self:has_state("build") and self.builder then
         self:save()
         self.builder:build()
     end
