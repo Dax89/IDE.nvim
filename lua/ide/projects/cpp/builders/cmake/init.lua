@@ -48,7 +48,7 @@ function CMake:get_targets()
         end, codemodel.configurations[1].targets)
     end
 
-    return { }
+    return {}
 end
 
 function CMake:_configure(options)
@@ -82,12 +82,11 @@ function CMake:configure()
 end
 
 function CMake:build(_, onexit)
-    self:check_settings(function(_, _, target)
+    self:check_settings(function()
         local args = {
             "--build", ".",
             "--config", self.project:get_mode(),
             "-j" .. Utils.get_number_of_cores(),
-            "--target", target
         }
 
         self.project:new_job("cmake", args, {title = "CMake - Build", state = "build", onexit = onexit})
