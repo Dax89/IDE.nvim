@@ -46,7 +46,13 @@ function Canvas:_reset_model()
             local oldv = rawget(t._data, k)
             if oldv ~= v then
                 rawset(t._data, k, v)
-                t:get_component(k):set_value(v)
+
+                local c = t:get_component(k)
+
+                if c then
+                    c:set_value(v)
+                end
+
                 self:on_model_changed(t, k, v, oldv)
                 self:render()
             end
@@ -238,7 +244,7 @@ function Canvas:set_components(components)
             table.insert(self._components, c)
 
             if c.id then
-                if self.model[c.id] then
+                if self.model:get_component(c.id) then
                     error("Duplicate id '" .. c.id .. "'")
                 end
 
