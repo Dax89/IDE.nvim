@@ -68,7 +68,7 @@ end
 function Builder:settings()
     local d = require("ide.internal.dialogs")
 
-    d.BuilderDialog(self, {showsave = true}):popup(function()
+    d.BuilderDialog(self, {save = true}):popup(function()
         self.project:write()
     end)
 end

@@ -5,7 +5,7 @@ local Components = require("ide.ui.components")
 local CMakeSettings = Utils.class(Dialogs.BuilderDialog)
 
 function CMakeSettings:init(builder)
-    Dialogs.BuilderDialog.init(self, builder)
+    Dialogs.BuilderDialog.init(self, builder, {runargs = true})
     builder:configure()
     vim.api.nvim_command("wincmd p")
 

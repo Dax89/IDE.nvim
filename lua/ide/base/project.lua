@@ -20,7 +20,8 @@ function Project:init(config, path, name, builder)
         mode = nil,
         target = nil,
         builder = builder,
-        options = { }
+        options = { },
+        runargs = { }
     }
 
     local projfile = Path:new(self.path, config.project_file)
@@ -74,6 +75,14 @@ end
 
 function Project:get_type()
     return nil
+end
+
+function Project:set_runargs(target, args)
+    self.data.runargs[target] = (args ~= nil and args ~= "") and args or nil
+end
+
+function Project:get_runargs(target)
+    return target and (self.data.runargs[target] or "") or ""
 end
 
 function Project:is_virtual()
