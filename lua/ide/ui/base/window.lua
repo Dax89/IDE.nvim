@@ -1,11 +1,9 @@
 local Utils = require("ide.utils")
-local Model = require("ide.ui.base.model")
+local Buffer = require("ide.ui.base.buffer")
 
-local Popup = Utils.class(Model)
+local Window = Utils.class(Buffer)
 
-function Popup:init(options)
-    self.hwin = nil
-
+function Window:init(options)
     options = vim.tbl_extend("force", {
         style = "minimal",
         relative = "editor",
@@ -13,24 +11,12 @@ function Popup:init(options)
         border = "single",
     }, options or { })
 
-    Model.init(self, options)
+    self.hwin = nil
+    Buffer.init(self, options)
 end
 
-function Popup:set_components(components)
-    if not self.options.height then
-        self.options.height = not vim.tbl_isempty(components) and #components or math.ceil(vim.o.lines * 0.75)
-    end
-
-    Model.set_components(self, components)
-end
-
-function Popup:show()
+function Window:show()
     if not self.hwin then
-
-        if vim.tbl_isempty(self._components) then
-            self:set_components({})
-        end
-
         self.options.row = (vim.o.lines - self.options.height) / 2
         self.options.col = (vim.o.columns - self.options.width) / 2
 
@@ -53,7 +39,7 @@ function Popup:show()
     self:refresh()
 end
 
-function Popup:close()
+function Window:close()
     self:_destroy()
 
     if self.hwin then
@@ -65,5 +51,5 @@ function Popup:close()
     end
 end
 
-return Popup
+return Window
 

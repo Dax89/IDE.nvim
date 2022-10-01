@@ -1,6 +1,6 @@
 return {
-    Canvas = require("ide.ui.base.canvas"),
+    Buffer = require("ide.ui.base.buffer"),
     Component = require("ide.ui.base.component"),
     Model = require("ide.ui.base.model"),
-    Popup = require("ide.ui.base.popup"),
+    Window = require("ide.ui.base.window"),
 }

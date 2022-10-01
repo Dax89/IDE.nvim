@@ -52,7 +52,7 @@ function CreateProjectDialog:_get_features(...)
 end
 
 function CreateProjectDialog:_get_builders()
-    return self.model.type and self:_get_features("projects", self.model.type, "builders") or { }
+    return self.model.data.type and self:_get_features("projects", self.model.data.type, "builders") or { }
 end
 
 function CreateProjectDialog:_get_types()
