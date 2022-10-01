@@ -1,7 +1,7 @@
 local Utils = require("ide.utils")
-local Canvas = require("ide.ui.base.canvas")
+local Model = require("ide.ui.base.model")
 
-local Popup = Utils.class(Canvas)
+local Popup = Utils.class(Model)
 
 function Popup:init(options)
     self.hwin = nil
@@ -13,7 +13,7 @@ function Popup:init(options)
         border = "single",
     }, options or { })
 
-    Canvas.init(self, options)
+    Model.init(self, options)
 end
 
 function Popup:set_components(components)
@@ -21,7 +21,7 @@ function Popup:set_components(components)
         self.options.height = not vim.tbl_isempty(components) and #components or math.ceil(vim.o.lines * 0.75)
     end
 
-    Canvas.set_components(self, components)
+    Model.set_components(self, components)
 end
 
 function Popup:show()
