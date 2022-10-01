@@ -236,29 +236,27 @@ function Dialog:render()
         table.insert(lines, table.concat(row))
     end
 
-    vim.api.nvim_buf_set_option(self.hbuf, "modifiable", true)
-    vim.api.nvim_buf_clear_namespace(self.hbuf, self.hns, 0, -1)
-    vim.api.nvim_buf_set_lines(self.hbuf, 0, -1, false, lines)
+    self:commit(function()
+        vim.api.nvim_buf_set_lines(self.hbuf, 0, -1, false, lines)
 
-    for i, c in ipairs(self.model:get_components()) do
-        if c.foreground or c.background or c.bold then
-            local n = ("highlight_nvide_%d"):format(i)
+        for i, c in ipairs(self.model:get_components()) do
+            if c.foreground or c.background or c.bold then
+                local n = ("highlight_nvide_%d"):format(i)
 
-            vim.api.nvim_set_hl(self.hns, n, {
-                foreground = hl(c.foreground, {"foreground", "background"}),
-                background = hl(c.background, {"background", "foreground"}),
-                bold = c.bold or false
-            })
+                vim.api.nvim_set_hl(self.hns, n, {
+                    foreground = hl(c.foreground, {"foreground", "background"}),
+                    background = hl(c.background, {"background", "foreground"}),
+                    bold = c.bold or false
+                })
 
-            local start = self:calc_col(c)
+                local start = self:calc_col(c)
 
-            for r = 0, self:calc_height(c) - 1 do
-                vim.api.nvim_buf_add_highlight(self.hbuf, self.hns, n, c.row + r, start, start + self:calc_width(c))
+                for r = 0, self:calc_height(c) - 1 do
+                    vim.api.nvim_buf_add_highlight(self.hbuf, self.hns, n, c.row + r, start, start + self:calc_width(c))
+                end
             end
         end
-    end
-
-    vim.api.nvim_buf_set_option(self.hbuf, "modifiable", false)
+    end)
 end
 
 function Dialog:on_help()

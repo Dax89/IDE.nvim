@@ -126,6 +126,13 @@ function Buffer:get_height()
     return self.options.height
 end
 
+function Buffer:commit(cb)
+    vim.api.nvim_buf_set_option(self.hbuf, "modifiable", true)
+    vim.api.nvim_buf_clear_namespace(self.hbuf, self.hns, 0, -1)
+    cb()
+    vim.api.nvim_buf_set_option(self.hbuf, "modifiable", false)
+end
+
 function Buffer:render()
 end
 
