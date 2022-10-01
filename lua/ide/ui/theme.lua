@@ -1,6 +1,6 @@
 local Theme = {
     primary = "CurSearch",
-    secondary = "Comment",
+    secondary = "String",
     accent = "Title",
     error = "ErrorMsg",
 }
