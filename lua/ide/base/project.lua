@@ -249,7 +249,7 @@ function Project:untemplate()
 end
 
 function Project:configure()
-    if self.builder then
+    if not self:has_state("configure") and not self:has_state("build") and self.builder then
         self:save()
         self.builder:configure()
     end
