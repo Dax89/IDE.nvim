@@ -9,7 +9,6 @@
   <br>
   <br>
   Nice Project Management, Build, and Debug support for various type of programming languages.<br>
-  <ins><b>NOTE:</b> This plugin is still under development, it can be unstable and API can change!</ins>
 </p>
 
 # Installation
