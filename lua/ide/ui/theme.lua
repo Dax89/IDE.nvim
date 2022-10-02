@@ -3,6 +3,7 @@ local Theme = {
     secondary = "String",
     accent = "Title",
     error = "ErrorMsg",
+    selected = "Todo",
 }
 
 local M = { }
