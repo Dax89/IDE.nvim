@@ -48,7 +48,7 @@ function Model:validate(keys)
     keys = keys or vim.tbl_keys(rawget(self.data, "_data"))
 
     if vim.tbl_isempty(keys) then
-        return false
+        return true
     end
 
     for _, k in ipairs(keys) do

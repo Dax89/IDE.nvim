@@ -4,7 +4,7 @@ local Buffer = require("ide.ui.base.buffer")
 local Window = Utils.class(Buffer)
 
 function Window:init(options)
-    options = vim.tbl_extend("force", {
+    self.winoptions = vim.tbl_extend("force", {
         style = "minimal",
         relative = "editor",
         width = math.ceil(vim.o.columns * 0.75),
@@ -12,22 +12,28 @@ function Window:init(options)
     }, options or { })
 
     self.hwin = nil
-    Buffer.init(self, options)
+
+    Buffer.init(self, {
+        width = self.winoptions.width,
+        height = self.winoptions.height,
+        name = self.winoptions.name
+    })
 end
 
 function Window:show()
     if not self.hwin then
-        self.options.row = (vim.o.lines - self.options.height) / 2
-        self.options.col = (vim.o.columns - self.options.width) / 2
+        self.winoptions.row = (vim.o.lines - self.winoptions.height) / 2
+        self.winoptions.col = (vim.o.columns - self.winoptions.width) / 2
 
         self.hwin = vim.api.nvim_open_win(self.hbuf, true, {
-            border = self.options.border,
-            style = self.options.style,
-            relative = self.options.relative,
-            row = self.options.row,
-            col = self.options.col,
-            width = self.options.width,
-            height = self.options.height,
+            border = self.winoptions.border,
+            style = self.winoptions.style,
+            relative = self.winoptions.relative,
+            row = self.winoptions.row,
+            col = self.winoptions.col,
+            width = self.winoptions.width,
+            height = self.winoptions.height,
+            zindex = self.winoptions.zindex,
         })
 
         vim.api.nvim_win_set_option(self.hwin, "sidescrolloff", 0)

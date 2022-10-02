@@ -3,7 +3,7 @@ local Utils = require("ide.utils")
 local Buffer = Utils.class()
 
 function Buffer:init(options)
-    self.options = options or { }
+    self.bufoptions = options or { }
     self.hbuf = vim.api.nvim_create_buf(false, true)
     self.hns = vim.api.nvim_create_namespace("canvas_" .. tostring(self.hbuf))
     self.hgrp = vim.api.nvim_create_augroup("canvas_agroup_" .. tostring(self.hbuf), {})
@@ -15,20 +15,28 @@ function Buffer:init(options)
     vim.api.nvim_buf_set_option(self.hbuf, "buftype", "nofile")
     vim.api.nvim_buf_set_option(self.hbuf, "textwidth", self:get_width())
 
-    if self.options.name then
-        vim.api.nvim_buf_set_option(self.hbuf, "filetype", self.options.name)
+    if self.bufoptions.name then
+        vim.api.nvim_buf_set_option(self.hbuf, "filetype", self.bufoptions.name)
     end
 end
 
-function Buffer:map(key, v, options)
+function Buffer:map(keys, v, options)
     options = options or { }
-    table.insert(self._keys, {key = key, builtin = options.builtin})
+    local builtin = options.builtin
     options.builtin = nil
 
-    vim.keymap.set("n", key, v, vim.tbl_extend("force", options, {
-        nowait = true,
-        buffer = self.hbuf
-    }))
+    if not vim.tbl_islist(keys) then
+        keys = {keys}
+    end
+
+    for _, k in ipairs(keys) do
+        table.insert(self._keys, {key = k, builtin = builtin})
+
+        vim.keymap.set("n", k, v, vim.tbl_extend("force", options, {
+            nowait = true,
+            buffer = self.hbuf
+        }))
+    end
 end
 
 function Buffer:refresh()
@@ -119,11 +127,11 @@ function Buffer:_blank()
 end
 
 function Buffer:get_width()
-    return self.options.width
+    return self.bufoptions.width
 end
 
 function Buffer:get_height()
-    return self.options.height
+    return self.bufoptions.height
 end
 
 function Buffer:commit(cb)

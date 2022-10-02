@@ -41,14 +41,15 @@ function Dialog:set_components(components)
         hidx = 2
     end
 
-    if self.options.showhelp ~= false then
+    if self.winoptions.showhelp ~= false then
         table.insert(c, hidx, {
             Components.Label("Press '<C-h>' for Help", {width = "100%", align = "center", foreground = "secondary"})
         })
     end
 
-    if not self.options.height then
-        self.options.height = not vim.tbl_isempty(c) and #c or math.ceil(vim.o.lines * 0.75)
+    if not self.winoptions.height then
+        self.winoptions.height = not vim.tbl_isempty(c) and #c or math.ceil(vim.o.lines * 0.75)
+        self.bufoptions.height = self.winoptions.height
     end
 
     self._extmarks = { }
@@ -156,7 +157,7 @@ function Dialog:_create_mapping()
     end
 
     self:map("<C-h>", function()
-        if self.options.showhelp ~= false then
+        if self.winoptions.showhelp ~= false then
             self:on_help()
         end
     end, {builtin = true})

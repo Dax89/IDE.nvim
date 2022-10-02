@@ -11,6 +11,11 @@ function BuilderDialog:init(builder, options)
     self._showsave = options.save or false
     self._showrunargs = options.runargs or false
 
+    self._options = {
+        modekey = options.modekey,
+        targetkey = options.targetkey
+    }
+
     local title = options.title or (self.project:get_name() .. " - Settings")
     local dlgoptions = vim.tbl_extend("force", {width = 50}, options)
     Dialogs.Dialog.init(self, title, dlgoptions)
@@ -20,7 +25,7 @@ function BuilderDialog:set_components(components)
     local builtins = {{
         Components.Select("Mode:", self.project:get_mode(), {
             id = "mode",
-            key = self.options.modekey or "m",
+            key = self._options.modekey or "m",
             width = "50%",
             change = function(_, v)
                 self.project:set_mode(v)
@@ -31,7 +36,7 @@ function BuilderDialog:set_components(components)
         }),
         Components.Select("Target:", self.project:get_target(), {
             id = "target",
-            key = self.options.targetkey or "t",
+            key = self._options.targetkey or "t",
             col = "50%",
             width = "50%",
             change = function(_, v)
