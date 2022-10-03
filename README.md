@@ -37,7 +37,7 @@ require("ide").setup({
     debug = false,
     build_dir = "build",
     project_file = "project.nvide",
-    mappings = { }
+    mappings = { },
 
     quickfix = {
         pos = "bel"
