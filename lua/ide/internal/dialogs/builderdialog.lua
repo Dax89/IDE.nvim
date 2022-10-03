@@ -49,7 +49,7 @@ function BuilderDialog:set_components(components)
     }
 
     if self._showrunargs then
-        table.insert(builtins, Components.Input("Run Arguments", self.project:get_runargs(self.project:get_target()), {
+        table.insert(builtins, Components.Input("Run Arguments:", self.project:get_runargs(self.project:get_target()), {
             id = "runargs",
             width = "100%",
             optional = true,
