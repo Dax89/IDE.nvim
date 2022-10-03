@@ -31,7 +31,6 @@ function NodeSettings:init(builder)
                 items = function()
                     return vim.tbl_keys(self.package.dependencies or { })
                 end,
-                remove = function(_, dep) self:uninstall_dependency(dep, false) end,
                 selected = function(c) self:install_dependencies(c) end
             }),
 
@@ -42,7 +41,6 @@ function NodeSettings:init(builder)
                 items = function()
                     return vim.tbl_keys(self.package.devDependencies or { })
                 end,
-                remove = function(_, dep) self:uninstall_dependency(dep, true) end,
                 selected = function(c) self:install_dependencies(c, true) end,
             }),
 
@@ -60,15 +58,16 @@ function NodeSettings:init(builder)
     })
 end
 
-function NodeSettings:uninstall_dependency(dep, dev)
+function NodeSettings:uninstall_dependencies(deps, dev)
     local args = {
         "uninstall",
         dev and "--save-dev" or "--save",
-        dep
     }
 
+    args = vim.list_extend(args, deps)
+
     self.project:new_job("npm", args, {
-        title = "Installing Dependency...",
+        title = "Uninstalling Dependencies...",
         state = "configure",
         src = true,
         onexit = function()
@@ -77,6 +76,12 @@ function NodeSettings:uninstall_dependency(dep, dev)
 end
 
 function NodeSettings:install_dependencies(listview, dev)
+    local deps = dev and self.package.devDependencies or self.package.dependencies
+
+    local toremove = vim.tbl_filter(function(dep)
+        return vim.tbl_contains(listview.items, dep)
+    end, vim.tbl_keys(deps or { }))
+
     local args = {
         "install",
         dev and "--save-dev" or "--save"
@@ -89,7 +94,11 @@ function NodeSettings:install_dependencies(listview, dev)
         state = "configure",
         src = true,
         onexit = function()
-          self.package = self:read_package()
+            if vim.tbl_isempty(toremove) then
+                self.package = self:read_package()
+            else
+                self:uninstall_dependencies(toremove)
+            end
       end})
 end
 
