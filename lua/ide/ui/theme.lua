@@ -1,5 +1,5 @@
 local Theme = {
-    primary = "CurSearch",
+    primary = "Cursor",
     secondary = "String",
     accent = "Title",
     error = "ErrorMsg",
