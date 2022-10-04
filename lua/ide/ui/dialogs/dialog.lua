@@ -203,11 +203,16 @@ function Dialog:render()
         h = theme.get_color(h)
         local hln = vim.api.nvim_get_hl_by_name(h, true)
 
+        if hln.reverse == true then -- If reverse is set return the table itself
+            return hln
+        end
+
         for _, ct in ipairs(t) do
             if hln[ct] then
                 return "#" .. bit.tohex(hln[ct], 6)
             end
         end
+
         error("Cannot find color '" .. h .. "'")
     end
 
@@ -243,12 +248,19 @@ function Dialog:render()
         for i, c in ipairs(self.model:get_components()) do
             if c.foreground or c.background or c.bold then
                 local n = ("highlight_nvide_%d"):format(i)
+                local currhl, hlc = nil, hl(c.foreground, {"foreground", "background"})
 
-                vim.api.nvim_set_hl(self.hns, n, {
-                    foreground = hl(c.foreground, {"foreground", "background"}),
-                    background = hl(c.background, {"background", "foreground"}),
-                    bold = c.bold or false
-                })
+                if type(hlc) == "table" then -- HACK: Set highlighting entirely
+                    currhl = hlc
+                else
+                    currhl = {
+                        foreground = hlc,
+                        background = hl(c.background, {"background", "foreground"}),
+                        bold = c.bold or false
+                    }
+                end
+
+                vim.api.nvim_set_hl(self.hns, n, currhl)
 
                 local start = self:calc_col(c)
 
