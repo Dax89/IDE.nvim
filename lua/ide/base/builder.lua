@@ -77,8 +77,8 @@ function Builder:check_settings(cb)
 
     if dlg then
         dlg(self):popup(function(data)
-            self._project:set_mode(data.mode)
-            self._project:set_target(data.target)
+            self.project:set_mode(data.mode)
+            self.project:set_target(data.target)
             vim.F.npcall(cb, self, data.mode, data.target)
         end)
     else
