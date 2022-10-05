@@ -10,9 +10,12 @@ function Input:init(label, value, options)
     self.label = vim.F.if_nil(label, "")
 
     private[self] = {
+        showlabel = vim.F.if_nil(options.showlabel, true),
+        showicon = vim.F.if_nil(options.showicon, true),
+        align = vim.F.if_nil(options.align, "left"),
         value = vim.F.if_nil(value, ""),
         format = vim.F.if_nil(options.format, "%s"),
-        icon = vim.F.if_nil(options.icon, ""),
+        icon = #self.label > 0 and vim.F.if_nil(options.icon, "") or nil,
         change = options.change
     }
 
@@ -27,14 +30,23 @@ function Input:get_value()
     return private[self].value
 end
 
-function Input:render(_)
+function Input:render(buffer)
     local s = ""
 
-    if private[self].icon then
+    if private[self].showicon and private[self].icon then
         s = private[self].icon .. " "
     end
 
-    return s .. self.label .. " "  .. string.format(private[self].format, private[self].value)
+    if private[self].showlabel then
+        s = s .. self.label
+    end
+
+    if private[self].align == "left" then
+        return s .. " "  .. string.format(private[self].format, private[self].value), buffer
+    end
+
+    -- FIXME: self.label is not counted in alignment
+    return s .. self:_aligned_text(string.format(private[self].format, private[self].value), buffer)
 end
 
 function Input:on_click(_)
@@ -45,11 +57,17 @@ function Input:on_doubleclick(e)
 end
 
 function Input:on_event(e)
-    vim.ui.input(self.label, function(choice)
-        local oldvalue = private[self].value
-        private[self].value = choice
-        vim.F.npcall(private[self].change, self, choice, oldvalue)
-        e.update()
+    vim.ui.input({prompt = self.label}, function(choice)
+        if choice then
+            local oldvalue = private[self].value
+            private[self].value = choice
+
+            if vim.is_callable(private[self].change) then
+                private[self].change(self, choice, oldvalue)
+            end
+
+            e.update()
+        end
     end)
 end
 

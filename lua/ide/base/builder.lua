@@ -79,7 +79,10 @@ function Builder:check_settings(cb)
         dlg(self):popup(function(data)
             self.project:set_mode(data.mode)
             self.project:set_target(data.target)
-            vim.F.npcall(cb, self, data.mode, data.target)
+
+            if vim.is_callable(cb) then
+                cb(self, data.mode, data.target)
+            end
         end)
     else
         self:_check_mode(cb)
@@ -123,7 +126,10 @@ function Builder:_check_target(cb)
             if target then
                 self.project:set_target(target)
                 self.project:write()
-                vim.F.npcall(cb, self.project:get_mode(), target)
+
+                if vim.is_callable(cb) then
+                    cb(self.project:get_mode(), target)
+                end
             end
         end)
     else
@@ -135,6 +141,7 @@ function Builder:_get_settings_dialog()
     local ok, d = pcall(require, "ide.projects." .. self.project:get_type() ..
                                  ".builders." .. self:get_type() ..
                                  ".settings")
+
     return ok and d or nil
 end
 

@@ -18,9 +18,9 @@ function Component:init(options)
     self.align = vim.F.if_nil(self.align, vim.F.if_nil(options.align, "left"))
 end
 
-function Component:_aligned_text(text, canvas)
+function Component:_aligned_text(text, buffer)
     local UTF8 = require("ide.ui.utils.utf8")
-    local len, w = UTF8.len(text), canvas:calc_width(self)
+    local len, w = UTF8.len(text), buffer:calc_width(self)
     local pad, s = string.rep(" ", math.max(math.ceil((w - len)), 0)), ""
 
     if self.align == "center" then

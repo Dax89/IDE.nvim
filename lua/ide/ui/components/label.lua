@@ -21,8 +21,8 @@ function Label:init(text, options)
     Base.Component.init(self, options)
 end
 
-function Label:render(canvas)
-    return self:_aligned_text(self.text, canvas)
+function Label:render(buffer)
+    return self:_aligned_text(self.text, buffer)
 end
 
 return Label

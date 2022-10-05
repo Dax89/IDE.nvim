@@ -141,7 +141,9 @@ function Runner:_new_job(command, args, cwd, options)
                 return item[1] ~= job
             end, self.jobs)
 
-            vim.F.npcall(options.onexit, self, code)
+            if vim.is_callable(options.onexit) then
+                options.onexit(self, code)
+            end
         end)
     })
 

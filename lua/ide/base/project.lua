@@ -340,8 +340,8 @@ function Project:run_dap(dapoptions, options)
     }
 
     if self:has_state("debug") then
-        if options.type then
-            vim.F.npcall(DAP_COMMANDS[options.type])
+        if vim.is_callable(DAP_COMMANDS[options.type]) then
+            DAP_COMMANDS[options.type]()
         else
             Dap.continue()
         end

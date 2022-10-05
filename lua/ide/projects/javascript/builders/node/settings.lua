@@ -25,6 +25,7 @@ function NodeSettings:init(builder)
         {},
         {
             Components.ListView("Dependencies", {
+                key = "d",
                 col = 0,
                 background = "secondary",
                 view = {width = 40},
@@ -32,10 +33,11 @@ function NodeSettings:init(builder)
                 items = function()
                     return vim.tbl_keys(self.package.dependencies or { })
                 end,
-                selected = function(c) self:install_dependencies(c) end
+                change = function(_, data) self:install_dependencies(data) end
             }),
 
             Components.ListView("Dev Dependencies", {
+                key = "D",
                 col = 15,
                 background = "secondary",
                 view = {width = 40},
@@ -43,16 +45,32 @@ function NodeSettings:init(builder)
                 items = function()
                     return vim.tbl_keys(self.package.devDependencies or { })
                 end,
-                selected = function(c) self:install_dependencies(c, true) end,
+                change = function(_, data) self:install_dependencies(data, true) end,
             }),
 
             Components.TableView("Scripts", {
+                key = "s",
                 col = 34,
                 background = "secondary",
                 view = {width = 80},
                 header = {
-                    {label = "Name", name = "name"},
-                    {label = "Command", name = "command"},
+                    {
+                        label = "Name",
+                        name = "name",
+                        type = function(_, arg)
+                            arg.options.change = function(_, v) arg.change(v) end
+                            return Components.Input(arg.label, arg.value, arg.options)
+                        end
+                    },
+                    {
+                        label = "Command",
+                        name = "command",
+                        type = function(_, arg)
+                            arg.options.change = function(_, v) arg.change(v) end
+                            arg.options.align = "left"
+                            return Components.Input(arg.label, arg.value, arg.options)
+                        end
+                    },
                 },
                 data = function()
                     local data = { }
@@ -63,7 +81,7 @@ function NodeSettings:init(builder)
 
                     return data
                 end,
-                selected = function(c) self:on_scripts_selected(c) end
+                change = function(_, c) self:update_scripts(c) end
             }),
 
             Components.Button("Save", {col = -1, event = function() self:accept() end}),
@@ -88,11 +106,11 @@ function NodeSettings:uninstall_dependencies(deps, dev)
       end})
 end
 
-function NodeSettings:install_dependencies(listview, dev)
+function NodeSettings:install_dependencies(items, dev)
     local deps = dev and self.package.devDependencies or self.package.dependencies
 
     local toremove = vim.tbl_filter(function(dep)
-        return vim.tbl_contains(listview.items, dep)
+        return vim.tbl_contains(items, dep)
     end, vim.tbl_keys(deps or { }))
 
     local args = {
@@ -100,7 +118,7 @@ function NodeSettings:install_dependencies(listview, dev)
         dev and "--save-dev" or "--save"
     }
 
-    args = vim.list_extend(args, listview.items)
+    args = vim.list_extend(args, items)
 
     self.project:new_job("npm", args, {
         title = "Installing Dependencies...",
@@ -112,19 +130,30 @@ function NodeSettings:install_dependencies(listview, dev)
             else
                 self:uninstall_dependencies(toremove)
             end
-      end})
+        end})
 end
 
--- function NodeSettings:on_scripts_selected(listview)
--- end
+function NodeSettings:update_scripts(scripts)
+    self.package.scripts = { }
+
+    for _, row in ipairs(scripts) do
+        self.package.scripts[row.name] = row.command
+    end
+
+    self:write_package()
+end
 
 function NodeSettings:on_accept(model)
     self.package = vim.tbl_extend("force", self.package, model:get_data())
-    Utils.write_json(Path:new(self.project:get_path(), "package.json"), self.package)
+    self:write_package()
 end
 
 function NodeSettings:read_package()
     return Utils.read_json(Path:new(self.project:get_path(), "package.json"))
+end
+
+function NodeSettings:write_package()
+    Utils.write_json(Path:new(self.project:get_path(), "package.json"), self.package)
 end
 
 return NodeSettings

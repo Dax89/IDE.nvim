@@ -11,7 +11,6 @@ function Window:init(options)
         style = vim.F.if_nil(options.style, "minimal"),
         relative = vim.F.if_nil(options.relative, "editor"),
         border = vim.F.if_nil(options.border, "single"),
-        showhelp = vim.F.if_nil(options.showhelp, true),
     }
 
     self.hwin = nil
@@ -20,8 +19,26 @@ function Window:init(options)
     Buffer.init(self, {name = private[self].name})
 end
 
-function Window:has_show_help()
-    return private[self].showhelp
+function Window:get_cursor()
+    if self.hwin ~= nil then
+        return vim.api.nvim_win_get_cursor(self.hwin)
+    end
+
+    return {1, 1}
+end
+
+function Window:set_cursor(row, col)
+    if type(row) == "table" then
+        col = row[2]
+        row = row[1]
+    end
+
+    if self.hwin ~= nil then
+        local cc = self:get_cursor()
+        row = math.max(vim.F.if_nil(row, cc[1]), 1)
+        col = math.max(vim.F.if_nil(col, cc[2]), 0)
+        vim.api.nvim_win_set_cursor(self.hwin, {row, col})
+    end
 end
 
 function Window:show()

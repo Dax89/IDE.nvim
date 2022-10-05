@@ -18,8 +18,9 @@ function TableView:init(text, options)
         },
 
         selected = options.selected,
-        add = options.add,
+        change = options.change,
         remove = options.remove,
+        add = options.add,
     }
 end
 
@@ -38,8 +39,34 @@ function TableView:on_event(_)
         data = self.data(self)
     end
 
-    local ppheader = require("ide.ui.popups.table")(header, data, self.text, private[self].popupoptions)
-    ppheader:show()
+    local ppoptions = vim.tbl_extend("force", private[self].popupoptions, {
+        add = function(_, d, pos)
+            if vim.is_callable(private[self].add) then
+                private[self].add(self, d, pos)
+            end
+        end,
+
+        remove = function(_, d, idx)
+            if vim.is_callable(private[self].remove) then
+                private[self].remove(self, d, idx)
+            end
+        end,
+
+        change = function(_, d)
+            if vim.is_callable(private[self].change) then
+                private[self].change(self, d)
+            end
+        end,
+
+        selected = function(_, row, col)
+            if vim.is_callable(private[self].selected) then
+                private[self].selected(self, row, col)
+            end
+        end
+    })
+
+    local ppheader = require("ide.ui.popups.table")(header, data, self.text, ppoptions)
+    ppheader:popup()
 end
 
 return TableView

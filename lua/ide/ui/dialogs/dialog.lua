@@ -9,6 +9,7 @@ function Dialog:init(title, options)
     Window.init(self, options)
 
     private[self] = {
+        showhelp = vim.F.if_nil(options.showhelp, true),
         onaccept = options and options.onaccept or nil,
         dblclick = false,
         extmarks = { },
@@ -23,6 +24,16 @@ function Dialog:init(title, options)
     })
 
     self:_create_mapping()
+end
+
+function Dialog:set_cursor(row, col) -- Take care of the header
+    local baseidx = 3
+
+    if private[self].showhelp ~= true then
+        baseidx = baseidx - 1
+    end
+
+    Window.set_cursor(self, row == nil and row or row + baseidx, col)
 end
 
 function Dialog:set_components(components)
@@ -45,7 +56,7 @@ function Dialog:set_components(components)
         hidx = 2
     end
 
-    if self:has_show_help() ~= false then
+    if private[self].showhelp ~= false then
         table.insert(c, hidx, {
             Components.Label("Press '<C-h>' for Help", {width = "100%", align = "center", foreground = "secondary"})
         })
@@ -97,9 +108,16 @@ function Dialog:popup(cb)
     self:show()
 end
 
+function Dialog:fill_components(c, limit)
+    if #c <= limit then
+        repeat
+            table.insert(c, { })
+        until #c >= limit
+    end
+end
+
 function Dialog:_find_component(row, col)
     row = row - 1
-    col = col - 1
 
     for _, crow in ipairs(self.model:get_components()) do
         local cl = vim.tbl_islist(crow) and crow or {crow}
@@ -131,7 +149,7 @@ function Dialog:_event(c, type, row, col)
     self["on_" .. type](self)
 
     if not row or not col then
-        local cursor = vim.api.nvim_win_get_cursor(self.hwin)
+        local cursor = self:get_cursor()
         row, col = cursor[1], cursor[1]
     end
 
@@ -155,12 +173,12 @@ end
 
 function Dialog:_create_mapping()
     local function _send(t)
-        local cursor = vim.api.nvim_win_get_cursor(self.hwin)
+        local cursor = self:get_cursor()
         self:_event_at(t, cursor[1], cursor[2])
     end
 
     self:map("<C-h>", function()
-        if self:has_show_help() ~= false then
+        if private[self].showhelp ~= false then
             self:on_help()
         end
     end, {builtin = true})

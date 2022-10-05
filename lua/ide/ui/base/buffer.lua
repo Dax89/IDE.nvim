@@ -9,8 +9,8 @@ function Buffer:init(options)
     self.width = vim.F.if_nil(self.width, vim.F.if_nil(options.width, 0))
     self.height = vim.F.if_nil(self.height, vim.F.if_nil(options.height, 0))
     self.hbuf = vim.api.nvim_create_buf(false, true)
-    self.hns = vim.api.nvim_create_namespace("canvas_" .. tostring(self.hbuf))
-    self.hgrp = vim.api.nvim_create_augroup("canvas_agroup_" .. tostring(self.hbuf), {})
+    self.hns = vim.api.nvim_create_namespace("nvide_buffer_" .. tostring(self.hbuf))
+    self.hgrp = vim.api.nvim_create_augroup("nvide_buffer_agroup_" .. tostring(self.hbuf), {})
 
     private[self] = {
         name = options.name,
