@@ -5,7 +5,7 @@ local HLine = Utils.class(Base.Component)
 
 function HLine:init(options)
     options = options or { }
-    options.width = options.width or "100%" -- FIXME: if 50% is wrong
+    self.width = options.width or "100%" -- FIXME: if 50% is wrong
     Base.Component.init(self, options)
 end
 

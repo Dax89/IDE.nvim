@@ -1,5 +1,9 @@
 local M = { }
 
+function M.private_stash()
+    return setmetatable({}, {__mode = "k"})
+end
+
 function M.class(base)
     if base and type(base) ~= "table" then
         error("Base class type must be a table, got '" .. type(base) .. "'")

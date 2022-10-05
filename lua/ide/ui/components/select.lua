@@ -1,21 +1,25 @@
 local Utils = require("ide.utils")
 local Input = require("ide.ui.components.input")
 
+local private = Utils.private_stash()
 local Select = Utils.class(Input)
 
 function Select:init(label, value, options)
     options = options or { }
-    options.icon = options.icon or ""
-    Input.init(self, label, value, options)
+    options.icon = vim.F.if_nil(options.icon, "")
 
-    self._empty = options.empty or false
-    self._items = options.items or {}
-    self._change = options.change
-    self._formatitem = options.formatitem
+    private[self] = {
+        empty = vim.F.if_nil(options.empty, false),
+        items = vim.F.if_nil(options.items, { }),
+        change = options.change,
+        formatitem = options.formatitem,
+    }
+
+    Input.init(self, label, value, options)
 end
 
 function Select:_default_format_item(item)
-    if self._value and item == self._value then
+    if self:get_value() and item == self:get_value() then
         return (item.text or item) .. " - SELECTED"
     end
 
@@ -23,9 +27,9 @@ function Select:_default_format_item(item)
 end
 
 function Select:_find_selected(items)
-    if self._value then
+    if self:get_value() then
         for i, item in ipairs(items) do
-            if (item.value or item) == self._value then
+            if (item.value or item) == self:get_value() then
                 return i
             end
         end
@@ -37,11 +41,11 @@ end
 function Select:on_event(e)
     local items = {}
 
-    if self._items then
-        if vim.is_callable(self._items) then
-            items = self._items(self)
-        elseif type(self._items) == "table" then
-            items = self._items
+    if private[self].items then
+        if vim.is_callable(private[self].items) then
+            items = private[self].items(self)
+        elseif type(private[self].items) == "table" then
+            items = private[self].items
         end
     end
 
@@ -55,23 +59,27 @@ function Select:on_event(e)
         table.insert(items, 1, table.remove(items, idx))
     end
 
-    if self._empty then
+    if private[self].empty then
         table.insert(items, 1, "")
     end
 
     vim.ui.select(items, {
-        prompt = self._label,
+        prompt = self.label,
         format_item = function(item)
-            if vim.is_callable(self._formatitem) then
-                return self._format_item(self, item)
+            if vim.is_callable(private[self].formatitem) then
+                return private[self].formatitem(self, item)
             end
             return self:_default_format_item(item)
         end
     }, function(choice)
         if choice then
-            local oldvalue = self._value
+            local oldvalue = self:get_value()
             self:set_value(choice.value or choice)
-            vim.F.npcall(self._change, self, choice.value or choice, oldvalue)
+
+            if vim.is_callable(private[self].change) then
+                private[self].change(self, choice.value or choice, oldvalue)
+            end
+
             e.update()
         end
     end)

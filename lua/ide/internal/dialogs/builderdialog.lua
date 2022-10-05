@@ -2,19 +2,21 @@ local Utils = require("ide.utils")
 local Dialogs = require("ide.ui.dialogs")
 local Components = require("ide.ui.components")
 
+local private = Utils.private_stash()
 local BuilderDialog = Utils.class(Dialogs.Dialog)
 
 function BuilderDialog:init(builder, options)
     options = options or { }
+
+    private[self] = {
+        showsave = vim.F.if_nil(options.save, false),
+        showrunargs = vim.F.if_nil(options.runargs, false),
+        modekey = options.modekey,
+        targetkey = options.targetkey,
+    }
+
     self.builder = builder
     self.project = builder.project
-    self._showsave = options.save or false
-    self._showrunargs = options.runargs or false
-
-    self._options = {
-        modekey = options.modekey,
-        targetkey = options.targetkey
-    }
 
     local title = options.title or (self.project:get_name() .. " - Settings")
     local dlgoptions = vim.tbl_extend("force", {width = 50}, options)
@@ -25,7 +27,7 @@ function BuilderDialog:set_components(components)
     local builtins = {{
         Components.Select("Mode:", self.project:get_mode(), {
             id = "mode",
-            key = self._options.modekey or "m",
+            key = private[self].modekey or "m",
             width = "50%",
             change = function(_, v)
                 self.project:set_mode(v)
@@ -36,7 +38,7 @@ function BuilderDialog:set_components(components)
         }),
         Components.Select("Target:", self.project:get_target(), {
             id = "target",
-            key = self._options.targetkey or "t",
+            key = private[self].targetkey or "t",
             col = "50%",
             width = "50%",
             change = function(_, v)
@@ -48,7 +50,7 @@ function BuilderDialog:set_components(components)
         }
     }
 
-    if self._showrunargs then
+    if private[self].showrunargs then
         table.insert(builtins, Components.Input("Run Arguments:", self.project:get_runargs(self.project:get_target()), {
             id = "runargs",
             width = "100%",
@@ -61,7 +63,7 @@ function BuilderDialog:set_components(components)
 
     components = vim.list_extend(builtins, components or { })
 
-    if self._showsave then
+    if private[self].showsave then
         table.insert(components, Components.Button("Save", {
             col = -1,
             event = function()
@@ -78,7 +80,7 @@ function BuilderDialog:on_accept()
 end
 
 function BuilderDialog:on_model_changed(model, k, v, _)
-    if self._showrunargs and (k == "target") then
+    if private[self].showrunargs and (k == "target") then
         model.runargs = self.project:get_runargs(v)
     end
 end

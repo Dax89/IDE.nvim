@@ -1,22 +1,30 @@
 local Utils = require("ide.utils")
 
+local private = Utils.private_stash()
 local Buffer = Utils.class()
 
 function Buffer:init(options)
-    self.bufoptions = options or { }
+    options = options or { }
+
+    self.width = vim.F.if_nil(self.width, vim.F.if_nil(options.width, 0))
+    self.height = vim.F.if_nil(self.height, vim.F.if_nil(options.height, 0))
     self.hbuf = vim.api.nvim_create_buf(false, true)
     self.hns = vim.api.nvim_create_namespace("canvas_" .. tostring(self.hbuf))
     self.hgrp = vim.api.nvim_create_augroup("canvas_agroup_" .. tostring(self.hbuf), {})
 
+    private[self] = {
+        name = options.name,
+        keys = { },
+    }
+
     self.data = { }
-    self._keys = { }
 
     vim.api.nvim_buf_set_option(self.hbuf, "bufhidden", "wipe")
     vim.api.nvim_buf_set_option(self.hbuf, "buftype", "nofile")
-    vim.api.nvim_buf_set_option(self.hbuf, "textwidth", self:get_width())
+    vim.api.nvim_buf_set_option(self.hbuf, "textwidth", self.width)
 
-    if self.bufoptions.name then
-        vim.api.nvim_buf_set_option(self.hbuf, "filetype", self.bufoptions.name)
+    if private[self].name then
+        vim.api.nvim_buf_set_option(self.hbuf, "filetype", private[self].name)
     end
 end
 
@@ -30,7 +38,7 @@ function Buffer:map(keys, v, options)
     end
 
     for _, k in ipairs(keys) do
-        table.insert(self._keys, {key = k, builtin = builtin})
+        table.insert(private[self].keys, {key = k, builtin = builtin})
 
         vim.keymap.set("n", k, v, vim.tbl_extend("force", options, {
             nowait = true,
@@ -64,28 +72,28 @@ function Buffer:calc_col(c)
     local v, w = c.col, self:calc_width(c)
 
     if type(v) == "number" and v < 0 then
-        v = self:get_width() + v - w + 1
+        v = self.width + v - w + 1
     end
 
-    return self:_calc_coord(v, self:get_width())
+    return self:_calc_coord(v, self.width)
 end
 
 function Buffer:calc_row(c)
     local v, h = c.row, self:calc_height(c)
 
     if type(v) == "number" and v < 0 then
-        v = self:get_height() - h + 1
+        v = self.height - h + 1
     end
 
-    return self:_calc_coord(v, self:get_height())
+    return self:_calc_coord(v, self.height)
 end
 
 function Buffer:calc_width(c)
-    return self:_calc_coord(c.width, self:get_width())
+    return self:_calc_coord(c.width, self.width)
 end
 
 function Buffer:calc_height(c)
-    return self:_calc_coord(c.height, self:get_height())
+    return self:_calc_coord(c.height, self.height)
 end
 
 function Buffer:_destroy()
@@ -101,22 +109,22 @@ function Buffer:get_theme()
 end
 
 function Buffer:unmap_all(builtins)
-    for _, k in ipairs(self._keys) do
+    for _, k in ipairs(private[self].keys) do
         if not k.builtin or (k.builtin and builtins) then
             vim.keymap.del("n", k.key, {buffer = self.hbuf})
         end
     end
 
-    self._keys = { }
+    private[self].keys = { }
 end
 
 function Buffer:_blank()
     local data = { }
 
-    for _=1, self:get_height() do
+    for _=1, self.height do
         local row = { }
 
-        for _=1, self:get_width() do
+        for _=1, self.width do
             table.insert(row, " ")
         end
 
@@ -124,14 +132,6 @@ function Buffer:_blank()
     end
 
     return data
-end
-
-function Buffer:get_width()
-    return self.bufoptions.width
-end
-
-function Buffer:get_height()
-    return self.bufoptions.height
 end
 
 function Buffer:commit(cb)

@@ -1,10 +1,13 @@
 local Utils = require("ide.utils")
 
+local private = Utils.private_stash()
 local Model = Utils.class()
 
 function Model:init(options)
-    self._components = { }
-    self._options = options or { }
+    private[self] = vim.tbl_extend("keep", {
+        components = { },
+    }, options or { })
+
     self.data = self:_reset()
 end
 
@@ -36,8 +39,8 @@ function Model:_reset()
                     c:set_value(v)
                 end
 
-                if vim.is_callable(self._options.change) then
-                    self._options.change(t, k, v, oldv)
+                if vim.is_callable(private[self].change) then
+                    private[self].change(t, k, v, oldv)
                 end
             end
         end
@@ -62,11 +65,11 @@ function Model:validate(keys)
 end
 
 function Model:get_components()
-    return self._components
+    return private[self].components
 end
 
 function Model:each_component(cb, components)
-    for i, row in ipairs(components or self._components) do
+    for i, row in ipairs(components or private[self].components) do
         local cl = vim.tbl_islist(row) and row or {row}
 
         for _, c in ipairs(cl) do
@@ -76,12 +79,12 @@ function Model:each_component(cb, components)
 end
 
 function Model:set_components(components)
-    self._components = { }
+    private[self].components = { }
     self.data = self:_reset()
 
     self:each_component(function(c, i)
         c.row = i - 1
-        table.insert(self._components, c)
+        table.insert(private[self].components, c)
 
         if c.id then
             if self.data:get_component(c.id) then

@@ -5,7 +5,7 @@ local Dialogs = require("ide.ui.dialogs")
 local CreateProjectDialog = Utils.class(Dialogs.Dialog)
 
 function CreateProjectDialog:init(ide)
-    self._ide = ide
+    self.ide = ide
 
     Dialogs.Dialog.init(self, "Create Project", {width = 50})
 
@@ -28,11 +28,11 @@ function CreateProjectDialog:on_accept(model)
         return
     end
 
-    local p = ProjectType(self._ide.config, model.folder, model.name, model.builder)
-    self._ide.projects[model.folder] = p
-    self._ide.active = model.folder
+    local p = ProjectType(self.ide.config, model.folder, model.name, model.builder)
+    self.ide.projects[model.folder] = p
+    self.ide.active = model.folder
     p:create()
-    self._ide:pick_file(p:get_path(true))
+    self.ide:pick_file(p:get_path(true))
 end
 
 function CreateProjectDialog:on_model_changed(model, k, _, _)

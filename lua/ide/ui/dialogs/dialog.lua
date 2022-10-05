@@ -2,14 +2,18 @@ local Utils = require("ide.utils")
 local Window = require("ide.ui.base.window")
 local Model = require("ide.ui.base.model")
 
+local private = Utils.private_stash()
 local Dialog = Utils.class(Window)
 
 function Dialog:init(title, options)
     Window.init(self, options)
 
-    self._dblclick = false
-    self._extmarks = { }
-    self._title = title
+    private[self] = {
+        onaccept = options and options.onaccept or nil,
+        dblclick = false,
+        extmarks = { },
+        title = title,
+    }
 
     self.model = Model({
         change = function(model, k, newvalue, oldvalue)
@@ -32,27 +36,26 @@ function Dialog:set_components(components)
 
     local hidx, c, Components = 1, components, require("ide.ui.components")
 
-    if self._title then
+    if private[self].title then
         c = vim.list_extend({
-            Components.Label(self._title, {width = "100%", align = "center", foreground = "accent"}),
+            Components.Label(private[self].title, {width = "100%", align = "center", foreground = "accent"}),
             Components.HLine(),
         }, components)
 
         hidx = 2
     end
 
-    if self.winoptions.showhelp ~= false then
+    if self:has_show_help() ~= false then
         table.insert(c, hidx, {
             Components.Label("Press '<C-h>' for Help", {width = "100%", align = "center", foreground = "secondary"})
         })
     end
 
-    if not self.winoptions.height then
-        self.winoptions.height = not vim.tbl_isempty(c) and #c or math.ceil(vim.o.lines * 0.75)
-        self.bufoptions.height = self.winoptions.height
+    if self.height <= 0 then
+        self.height = not vim.tbl_isempty(c) and #c or math.ceil(vim.o.lines * 0.75)
     end
 
-    self._extmarks = { }
+    private[self].extmarks = { }
     self:unmap_all()
     self:clear()
 
@@ -77,8 +80,8 @@ function Dialog:accept()
 
     self:on_accept(self.model.data)
 
-    if vim.is_callable(self._onaccept) then
-        if self._onaccept(self.model.data, self) ~= false then
+    if vim.is_callable(private[self].onaccept) then
+        if private[self].onaccept(self.model.data, self) ~= false then
             self:close()
         end
     else
@@ -88,7 +91,7 @@ end
 
 function Dialog:popup(cb)
     if not self.hwin then
-        self._onaccept = cb
+        private[self].onaccept = cb
     end
 
     self:show()
@@ -157,7 +160,7 @@ function Dialog:_create_mapping()
     end
 
     self:map("<C-h>", function()
-        if self.winoptions.showhelp ~= false then
+        if self:has_show_help() ~= false then
             self:on_help()
         end
     end, {builtin = true})
@@ -171,15 +174,15 @@ function Dialog:_create_mapping()
     end, {builtin = true})
 
     self:map("<LeftRelease>", function()
-        if self._dblclick then
-            self._dblclick = false
+        if private[self].dblclick then
+            private[self].dblclick = false
         else
             _send("click")
         end
     end, {builtin = true})
 
     self:map("<2-LeftMouse>", function()
-        self._dblclick = true
+        private[self].dblclick = true
         _send("doubleclick")
     end, {builtin = true})
 end
@@ -248,6 +251,7 @@ function Dialog:render()
         for i, c in ipairs(self.model:get_components()) do
             if c.foreground or c.background or c.bold then
                 local n = ("highlight_nvide_%d"):format(i)
+
                 local currhl, hlc = nil, hl(c.foreground, {"foreground", "background"})
 
                 if type(hlc) == "table" then -- HACK: Set highlighting entirely
@@ -273,12 +277,12 @@ function Dialog:render()
 end
 
 function Dialog:on_help()
-    if not vim.tbl_isempty(self._extmarks) then
-        for _, id in ipairs(self._extmarks) do
+    if not vim.tbl_isempty(private[self].extmarks) then
+        for _, id in ipairs(private[self].extmarks) do
             vim.api.nvim_buf_del_extmark(self.hbuf, self.hns, id)
         end
 
-        self._extmarks = { }
+        private[self].extmarks = { }
         return
     end
 
@@ -286,7 +290,7 @@ function Dialog:on_help()
         if c.key then
             local row, col = self:calc_row(c), self:calc_col(c)
 
-            table.insert(self._extmarks, vim.api.nvim_buf_set_extmark(self.hbuf, self.hns, row, col, {
+            table.insert(private[self].extmarks, vim.api.nvim_buf_set_extmark(self.hbuf, self.hns, row, col, {
                 virt_text = {{c.key, "ErrorMsg"}},
                 virt_text_pos = "overlay"
             }))

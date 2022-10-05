@@ -27,6 +27,7 @@ function NodeSettings:init(builder)
             Components.ListView("Dependencies", {
                 col = 0,
                 background = "secondary",
+                view = {width = 40},
                 unique = true,
                 items = function()
                     return vim.tbl_keys(self.package.dependencies or { })
@@ -37,6 +38,7 @@ function NodeSettings:init(builder)
             Components.ListView("Dev Dependencies", {
                 col = 15,
                 background = "secondary",
+                view = {width = 40},
                 unique = true,
                 items = function()
                     return vim.tbl_keys(self.package.devDependencies or { })
@@ -44,14 +46,25 @@ function NodeSettings:init(builder)
                 selected = function(c) self:install_dependencies(c, true) end,
             }),
 
-            -- Components.ListView("Scripts", {
-            --     col = 34,
-            --     background = "secondary",
-            --     items = function()
-            --         return vim.tbl_keys(self.package.scripts or { })
-            --     end,
-            --     selected = function(c) self:on_scripts_selected(c) end
-            -- }),
+            Components.TableView("Scripts", {
+                col = 34,
+                background = "secondary",
+                view = {width = 80},
+                header = {
+                    {label = "Name", name = "name"},
+                    {label = "Command", name = "command"},
+                },
+                data = function()
+                    local data = { }
+
+                    for name, command in pairs(self.package.scripts or { }) do
+                        table.insert(data, {name = name, command = command})
+                    end
+
+                    return data
+                end,
+                selected = function(c) self:on_scripts_selected(c) end
+            }),
 
             Components.Button("Save", {col = -1, event = function() self:accept() end}),
         }

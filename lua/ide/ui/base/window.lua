@@ -1,39 +1,43 @@
 local Utils = require("ide.utils")
 local Buffer = require("ide.ui.base.buffer")
 
+local private = Utils.private_stash()
 local Window = Utils.class(Buffer)
 
 function Window:init(options)
-    self.winoptions = vim.tbl_extend("force", {
-        style = "minimal",
-        relative = "editor",
-        width = math.ceil(vim.o.columns * 0.75),
-        border = "single",
-    }, options or { })
+    options = options or { }
+
+    private[self] = {
+        style = vim.F.if_nil(options.style, "minimal"),
+        relative = vim.F.if_nil(options.relative, "editor"),
+        border = vim.F.if_nil(options.border, "single"),
+        showhelp = vim.F.if_nil(options.showhelp, true),
+    }
 
     self.hwin = nil
+    self.width = vim.F.if_nil(self.width, vim.F.if_nil(options.width, math.ceil(vim.o.columns * 0.75)))
+    self.height = vim.F.if_nil(self.height, options.height)
+    Buffer.init(self, {name = private[self].name})
+end
 
-    Buffer.init(self, {
-        width = self.winoptions.width,
-        height = self.winoptions.height,
-        name = self.winoptions.name
-    })
+function Window:has_show_help()
+    return private[self].showhelp
 end
 
 function Window:show()
     if not self.hwin then
-        self.winoptions.row = (vim.o.lines - self.winoptions.height) / 2
-        self.winoptions.col = (vim.o.columns - self.winoptions.width) / 2
+        private[self].row = (vim.o.lines - self.height) / 2
+        private[self].col = (vim.o.columns - self.width) / 2
 
         self.hwin = vim.api.nvim_open_win(self.hbuf, true, {
-            border = self.winoptions.border,
-            style = self.winoptions.style,
-            relative = self.winoptions.relative,
-            row = self.winoptions.row,
-            col = self.winoptions.col,
-            width = self.winoptions.width,
-            height = self.winoptions.height,
-            zindex = self.winoptions.zindex,
+            border = private[self].border,
+            style = private[self].style,
+            relative = private[self].relative,
+            row = private[self].row,
+            col = private[self].col,
+            zindex = private[self].zindex,
+            width = self.width,
+            height = self.height,
         })
 
         vim.api.nvim_win_set_option(self.hwin, "sidescrolloff", 0)
