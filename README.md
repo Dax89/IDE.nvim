@@ -14,7 +14,7 @@
 # Installation
 ```lua
 use {
-  "Dax89/ide.nvim",  
+  "Dax89/IDE.nvim",  
   requires = { 
        {"nvim-lua/plenary.nvim"},
        {"rcarriga/nvim-notify"},   -- Notifications Popup (Optional)
