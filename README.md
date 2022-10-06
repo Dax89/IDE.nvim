@@ -80,10 +80,12 @@ require("ide").setup({
 - `IdeProjectConfigure`: Configure the current project
 
 # API
-Currently, using `require("ide")` provides these functions:
+`require("ide")` provides these functions:
 - `setup([config])`: Initialize and configure plugin
 - `get_active_project()`: Returns the active project or `nil`
 - `get_projects()`: Returns a list of the loaded projects or `{}`
+
+Check the [Wiki](https://github.com/Dax89/IDE.nvim/wiki) for detailed documentation.
 
 # Related Projects
 - [projectmgr](https://github.com/charludo/projectmgr.nvim)
