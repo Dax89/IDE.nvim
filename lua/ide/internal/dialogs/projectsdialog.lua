@@ -2,14 +2,9 @@ local Utils = require("ide.utils")
 local Table = require("ide.ui.popups.table")
 local Path = require("plenary.path")
 
-local private = Utils.private_stash()
 local ProjectsDialog = Utils.class(Table)
 
 function ProjectsDialog:init(ide, options)
-    private[self] = {
-        ide = ide
-    }
-
     local header = {
         {name = "name", label = "Name", align = "right"},
         {name = "type", label = "Type"},
