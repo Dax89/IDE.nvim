@@ -162,7 +162,7 @@ function TablePopup:_update_table()
         error("TablePopup: Header is empty")
     end
 
-    local startcol, w = 0, math.floor(self.width / #private[self].header)
+    local startcol, w = 0, math.ceil(self.width / #private[self].header)
     self:set_cursor(private[self].rowindex + 2, private[self].colindex * w)
 
     local t, header = { }, vim.tbl_map(function(h)
@@ -171,7 +171,7 @@ function TablePopup:_update_table()
             width = w,
             foreground = "cursor",
             background = "cursor",
-            align = "center",
+            align = vim.F.if_nil(h.align, "center"),
         })
 
         startcol = startcol + w
@@ -189,7 +189,7 @@ function TablePopup:_update_table()
                     width = w,
                     showlabel = false,
                     showicon = false,
-                    align = "center",
+                    align = vim.F.if_nil(h.align, "center"),
                 }
 
                 local v, c = rowdata[h.name], nil
