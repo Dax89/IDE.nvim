@@ -13,7 +13,7 @@ function IDE:init(config)
     require("ide.integrations.dap").setup(config)
 end
 
-function IDE:_load_recents()
+function IDE:load_recents()
     local recentspath = Path:new(self._storage, "recents.json")
     local recents = { }
 
@@ -31,7 +31,7 @@ function IDE:_update_recents(project)
         return
     end
 
-    local recents, recentspath = self:_load_recents()
+    local recents, recentspath = self:load_recents()
     local p, idx  = project:get_path(true), -1
 
     for i, proj in ipairs(recents) do
@@ -58,6 +58,7 @@ function IDE:get_projects()
 end
 
 function IDE:pick_file(rootdir)
+    vim.pretty_print(rootdir)
     local PickerDialog = require("ide.ui.dialogs.picker")
     local p = Utils.read_json(Path:new(tostring(rootdir), self.config.project_file))
 
@@ -69,21 +70,6 @@ function IDE:pick_file(rootdir)
             self:get_active():on_ready()
         end, 1000)
     end, {cwd = rootdir, limitroot = true})
-end
-
-function IDE:recent_projects()
-    local recents = self:_load_recents()
-
-    vim.ui.select(Utils.list_reverse(recents), {
-        prompt = "Recent Projects",
-        format_item = function(proj)
-            return proj.name .. " - " .. proj.root
-        end
-    }, function(proj)
-        if proj then
-            self:pick_file(proj.root)
-        end
-    end)
 end
 
 function IDE:project_check(filepath, filetype)
@@ -184,7 +170,15 @@ local function setup(config)
         end })
 
     vim.api.nvim_create_user_command("IdeRecentProjects", function()
-        ide:recent_projects()
+        local ProjectsDialog = require("ide.internal.dialogs.projectsdialog")
+
+        local dlgprojects = ProjectsDialog(ide, {
+            change = function(t)
+                ide:pick_file(t:get_current_row().root)
+            end
+        })
+
+        dlgprojects:show()
     end, { })
 
     vim.api.nvim_create_user_command("IdeProjectCreate", function()
