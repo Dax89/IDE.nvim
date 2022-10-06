@@ -11,6 +11,7 @@ function TablePopup:init(header, data, title, options)
     private[self] = {
         header = vim.F.if_nil(header, { }),
         data = vim.F.if_nil(data, { }),
+        showbutton = vim.F.if_nil(options.showbutton, true),
         editable = vim.F.if_nil(options.editable, true),
         fullrow = vim.F.if_nil(options.fullrow, false),
         selected = options.selected,
@@ -35,6 +36,10 @@ function TablePopup:init(header, data, title, options)
     self:map({"k", "<Up>"}, function() self:on_move_up() end, {builtin = true})
     self:map({"h", "<Left>"}, function() self:on_move_left() end, {builtin = true})
     self:map({"l", "<Right>"}, function() self:on_move_right() end, {builtin = true})
+
+    if not private[self].showbutton and private[self].fullrow then
+        self:map("<CR>", function() self:_do_accept() end, {builtin = true})
+    end
 end
 
 function TablePopup:get_data()
@@ -80,6 +85,18 @@ function TablePopup:on_add()
     assert(vim.tbl_islist(newrow))
     table.insert(private[self].data, 1, newrow)
     self:_update_table()
+end
+
+function TablePopup:_do_accept()
+    if private[self].rowindex < 0 then
+        return
+    end
+
+    if not private[self].fullrow and private[self].colindex < 0 then
+        return
+    end
+
+    self:accept()
 end
 
 function TablePopup:on_accept()
@@ -213,13 +230,16 @@ function TablePopup:_update_table()
     end
 
     table.insert(t, 1, header)
-    self:fill_components(t, self.height - 4)
 
-    table.insert(t, Components.Button("Accept", {
-        key = "A",
-        col = -2,
-        event = function() self:accept() end
-    }))
+    if private[self].showbutton then
+        self:fill_components(t, self.height - 4)
+
+        table.insert(t, Components.Button("Accept", {
+            key = "A",
+            col = -2,
+            event = function() self:_do_accept() end
+        }))
+    end
 
     self:set_components(t)
     self:render()

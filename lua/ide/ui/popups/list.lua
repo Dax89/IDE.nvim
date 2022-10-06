@@ -105,7 +105,7 @@ end
 
 function ListPopup:_item_exists(item)
     local items = vim.is_callable(private[self].formatitem) and
-                  vim.tbl_map(function(x) return private[self].formatitem(self, x) end) or 
+                  vim.tbl_map(function(x) return private[self].formatitem(self, x) end) or
                   private[self].items
 
     return vim.tbl_contains(items, item)
