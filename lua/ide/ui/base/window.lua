@@ -1,5 +1,6 @@
 local Utils = require("ide.utils")
 local Buffer = require("ide.ui.base.buffer")
+local Screen = require("ide.ui.utils.screen")
 
 local private = Utils.private_stash()
 local Window = Utils.class(Buffer)
@@ -14,7 +15,7 @@ function Window:init(options)
     }
 
     self.hwin = nil
-    self.width = vim.F.if_nil(self.width, vim.F.if_nil(options.width, math.ceil(vim.o.columns * 0.75)))
+    self.width = vim.F.if_nil(self.width, vim.F.if_nil(options.width, Screen.get_width("75%")))
     self.height = vim.F.if_nil(self.height, options.height)
     Buffer.init(self, {name = private[self].name})
 end
@@ -43,8 +44,8 @@ end
 
 function Window:show()
     if not self.hwin then
-        private[self].row = (vim.o.lines - self.height) / 2
-        private[self].col = (vim.o.columns - self.width) / 2
+        private[self].row = (Screen.get_height() - self.height) / 2
+        private[self].col = (Screen.get_width() - self.width) / 2
 
         self.hwin = vim.api.nvim_open_win(self.hbuf, true, {
             border = private[self].border,

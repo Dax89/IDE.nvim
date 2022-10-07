@@ -1,4 +1,5 @@
 local Utils = require("ide.utils")
+local Screen = require("ide.ui.utils.screen")
 local Table = require("ide.ui.popups.table")
 local Path = require("plenary.path")
 
@@ -20,6 +21,7 @@ function ProjectsDialog:init(ide, options)
     end, Utils.list_reverse(recents))
 
     Table.init(self, header, data, "Projects", vim.tbl_extend("keep", {
+        width = Screen.get_width("60%"),
         showbutton = false,
         fullrow = true,
         editable = false,
