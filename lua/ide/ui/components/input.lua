@@ -23,11 +23,14 @@ function Input:init(label, value, options)
 end
 
 function Input:set_value(v)
-    local oldvalue = private[self].value
-    private[self].value = vim.F.if_nil(v, "")
+    local value, oldvalue = vim.F.if_nil(v, ""), private[self].value
 
-    if vim.is_callable(private[self].change) then
-        private[self].change(self, private[self].value, oldvalue)
+    if value ~= oldvalue then
+        private[self].value = value
+
+        if vim.is_callable(private[self].change) then
+            private[self].change(self, private[self].value, oldvalue)
+        end
     end
 end
 
