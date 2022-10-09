@@ -15,7 +15,7 @@ function CreateProjectDialog:init(ide)
             Components.Select("Type:", nil, {key = "t", id = "type", width = "50%", items = function() return self:_get_types() end}),
             Components.Select("Builder:", nil, {key = "b", id = "builder", col = "50%", width = "50%", items = function() return self:_get_builders() end}),
         },
-        Components.Picker("Folder:", {key = "f", id = "folder", width = "100%", onlydirs = true}),
+        Components.Picker("Folder:", nil, {key = "f", id = "folder", width = "100%", onlydirs = true}),
         Components.Button("Create", {key = "c", col = -1, event = function() self:accept() end})
     })
 end

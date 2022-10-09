@@ -4,7 +4,7 @@ local Input = require("ide.ui.components.input")
 local private = Utils.private_stash()
 local Picker = Utils.class(Input)
 
-function Picker:init(text, options)
+function Picker:init(text, value, options)
     options = options or { }
 
     private[self] = {
@@ -12,7 +12,7 @@ function Picker:init(text, options)
         cwd = options.cwd,
     }
 
-    Input.init(self, text, nil, options)
+    Input.init(self, text, value, options)
 end
 
 function Picker:on_event(e)
