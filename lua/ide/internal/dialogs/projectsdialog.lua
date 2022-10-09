@@ -22,7 +22,8 @@ function ProjectsDialog:init(ide, options)
 
     Table.init(self, header, data, "Projects", vim.tbl_extend("keep", {
         width = Screen.get_width("60%"),
-        showbutton = false,
+        showaccept = false,
+        selectionrequired = true,
         fullrow = true,
         editable = false,
     }, options or { }))

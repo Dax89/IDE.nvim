@@ -11,7 +11,7 @@ function Select:init(label, value, options)
     private[self] = {
         empty = vim.F.if_nil(options.empty, false),
         items = vim.F.if_nil(options.items, { }),
-        change = options.change,
+        changed = options.changed,
         formatitem = options.formatitem,
     }
 
@@ -76,8 +76,8 @@ function Select:on_event(e)
             local oldvalue = self:get_value()
             self:set_value(choice.value or choice)
 
-            if vim.is_callable(private[self].change) then
-                private[self].change(self, choice.value or choice, oldvalue)
+            if vim.is_callable(private[self].changed) then
+                private[self].changed(self, choice.value or choice, oldvalue)
             end
 
             e.update()

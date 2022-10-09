@@ -16,7 +16,7 @@ function Input:init(label, value, options)
         value = vim.F.if_nil(value, ""),
         format = vim.F.if_nil(options.format, "%s"),
         icon = #self.label > 0 and vim.F.if_nil(options.icon, "") or nil,
-        change = options.change
+        changed = options.changed,
     }
 
     Base.Component.init(self, options)
@@ -28,8 +28,8 @@ function Input:set_value(v)
     if value ~= oldvalue then
         private[self].value = value
 
-        if vim.is_callable(private[self].change) then
-            private[self].change(self, private[self].value, oldvalue)
+        if vim.is_callable(private[self].changed) then
+            private[self].changed(self, value, oldvalue)
         end
     end
 end

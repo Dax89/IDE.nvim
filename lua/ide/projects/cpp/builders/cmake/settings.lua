@@ -1,31 +1,22 @@
 local Utils = require("ide.utils")
 local Dialogs = require("ide.internal.dialogs")
-local Components = require("ide.ui.components")
 
-local CMakeSettings = Utils.class(Dialogs.BuilderDialog)
+local CMakeSettings = Utils.class(Dialogs.ConfigDialog)
 
-function CMakeSettings:init(builder)
-    Dialogs.BuilderDialog.init(self, builder, {runargs = true})
+function CMakeSettings:init(builder, header)
     builder:configure()
-    vim.api.nvim_command("wincmd p")
 
-    self:set_components({
-        {},
-        {
-            Components.Button("Run Configure", {
-                col = 0,
-                event = function()
-                    self.builder:configure()
-                end
-            }),
-            Components.Button("Save", {
-                col = -1,
-                event = function()
-                    self:accept()
-                end
-            })
-        }
+    Dialogs.ConfigDialog.init(self, builder, header, {
+        actions = {"Configure"},
+
+        actionselected = function(_, idx)
+            if idx == 1 then
+                builder:configure()
+            end
+        end
     })
+
+    vim.api.nvim_command("wincmd p")
 end
 
 return CMakeSettings

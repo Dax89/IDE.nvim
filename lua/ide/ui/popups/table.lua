@@ -1,6 +1,8 @@
 local Utils = require("ide.utils")
 local Dialog = require("ide.ui.dialogs.dialog")
+local Base = require("ide.ui.base")
 local Components = require("ide.ui.components")
+local Cells = require("ide.ui.components.cells")
 
 local private = Utils.private_stash()
 local TablePopup = Utils.class(Dialog)
@@ -8,16 +10,24 @@ local TablePopup = Utils.class(Dialog)
 function TablePopup:init(header, data, title, options)
     options = options or { }
 
+    self.title = title
+
     private[self] = {
         header = vim.F.if_nil(header, { }),
         data = vim.F.if_nil(data, { }),
-        showbutton = vim.F.if_nil(options.showbutton, true),
+        showaccept = vim.F.if_nil(options.showaccept, true),
         editable = vim.F.if_nil(options.editable, true),
         fullrow = vim.F.if_nil(options.fullrow, false),
+        selectionrequired = vim.F.if_nil(options.selectionrequired, false),
+        accepttext = vim.F.if_nil(options.accepttext, "Accept"),
+        actiontext = vim.F.if_nil(options.actiontext, "Actions"),
+        actionselected = options.actionselected,
+        actions = options.actions,
+        cellchanged = options.cellchanged,
         selected = options.selected,
-        change = options.change,
-        remove = options.remove,
-        add = options.add,
+        changed = options.changed,
+        removed = options.removed,
+        added = options.added,
         rowindex = -1,
         colindex = -1,
     }
@@ -37,7 +47,7 @@ function TablePopup:init(header, data, title, options)
     self:map({"h", "<Left>"}, function() self:on_move_left() end, {builtin = true})
     self:map({"l", "<Right>"}, function() self:on_move_right() end, {builtin = true})
 
-    if not private[self].showbutton and private[self].fullrow then
+    if not private[self].showaccept and private[self].fullrow then
         self:map("<CR>", function() self:_do_accept() end, {builtin = true})
     end
 end
@@ -75,8 +85,8 @@ function TablePopup:on_add()
 
     local newrow = { }
 
-    if vim.is_callable(private[self].add) then
-        newrow = private[self].add(self, newrow, {
+    if vim.is_callable(private[self].added) then
+        newrow = private[self].added(self, newrow, {
             row = private[self].rowindex,
             col = private[self].colindex
         }) or { }
@@ -88,20 +98,22 @@ function TablePopup:on_add()
 end
 
 function TablePopup:_do_accept()
-    if private[self].rowindex < 0 then
-        return
-    end
+    if private[self].selectionrequired then
+        if private[self].rowindex < 0 then
+            return
+        end
 
-    if not private[self].fullrow and private[self].colindex < 0 then
-        return
+        if not private[self].fullrow and private[self].colindex < 0 then
+            return
+        end
     end
 
     self:accept()
 end
 
 function TablePopup:on_accept()
-    if vim.is_callable(private[self].change) then
-        private[self].change(self, private[self].data)
+    if vim.is_callable(private[self].changed) then
+        private[self].changed(self, private[self].data)
     end
 end
 
@@ -113,8 +125,8 @@ function TablePopup:on_remove()
     if not vim.tbl_isempty(private[self].data) then
         local canremove = true
 
-        if vim.is_callable(private[self].remove) then
-            canremove = private[self].remove(self, self:get_current_item(), self.index) ~= false
+        if vim.is_callable(private[self].removed) then
+            canremove = private[self].removed(self, self:get_current_item(), self.index) ~= false
         end
 
         if canremove then
@@ -184,37 +196,51 @@ function TablePopup:_update_table()
 
         for colidx, h in pairs(private[self].header) do
             if h.name then
-                local options = {
-                    col = startcol,
-                    width = w,
-                    showlabel = false,
-                    showicon = false,
-                    align = vim.F.if_nil(h.align, "center"),
-                }
-
                 local v, c = rowdata[h.name], nil
 
-                local change = function(value)
-                    if private[self].editable then
-                        rowdata[h.name] = value
-                        self:_update_table()
-                    end
-                end
+                local celldata = {
+                    value = v,
+                    header = h,
+                    row = rowdata,
+                    label = h.label or h.name or "",
 
-                if vim.is_callable(h.type) then
-                    c = h.type(self, {
-                        value = v,
-                        header = h,
-                        change = change,
-                        row = rowdata,
-                        options = options,
-                        label = h.label or h.name or "",
-                    })
+                    options = {
+                        col = startcol,
+                        width = w,
+                        showlabel = false,
+                        showicon = false,
+                        align = vim.F.if_nil(h.align, "center"),
+                    },
+
+                    do_update = function(value)
+                        if private[self].editable then
+                            rowdata[h.name] = value
+
+                            if vim.is_callable(private[self].cellchanged) then
+                                private[self].cellchanged(self, {
+                                    header = h,
+                                    rowdata = rowdata,
+                                    data = private[self].data,
+                                    index = rowidx,
+                                })
+                            end
+
+                            self:_update_table()
+                        end
+                    end
+                }
+
+                if type(h.type) == "table" and h.type:instanceof(Cells.Cell) then
+                    c = h.type(celldata):create()
+                elseif vim.is_callable(h.type) then
+                    c = h.type(celldata)
                 end
 
                 if not c then
-                    c = Components.Label(vim.F.if_nil(v, ""), options)
+                    c = Cells.LabelCell(celldata):create()
                 end
+
+                assert(c:instanceof(Base.Component))
 
                 if private[self].rowindex + 1 == rowidx and (private[self].fullrow or private[self].colindex + 1 == colidx) then
                     c.foreground = "selected"
@@ -231,14 +257,39 @@ function TablePopup:_update_table()
 
     table.insert(t, 1, header)
 
-    if private[self].showbutton then
+    local needsactions = vim.tbl_islist(private[self].actions) and not vim.tbl_isempty(private[self].actions)
+
+    if needsactions or private[self].showaccept then
         self:fill_components(t, self.height - 4)
 
-        table.insert(t, Components.Button("Accept", {
-            key = "A",
-            col = -2,
-            event = function() self:_do_accept() end
-        }))
+        local buttons = { }
+
+        if needsactions then
+            table.insert(buttons, Components.Button(private[self].actiontext, {
+                key = "m",
+                col = 1,
+
+                event = function()
+                    vim.ui.select(private[self].actions, {
+                        prompt = "Actions"
+                    }, function(choice, idx)
+                        if choice and vim.is_callable(private[self].actionselected) then
+                            private[self].actionselected(choice, idx)
+                        end
+                    end)
+                end,
+            }))
+        end
+
+        if private[self].showaccept then
+            table.insert(buttons, Components.Button(private[self].accepttext, {
+                key = "A",
+                col = -2,
+                event = function() self:_do_accept() end
+            }))
+        end
+
+        table.insert(t, buttons)
     end
 
     self:set_components(t)

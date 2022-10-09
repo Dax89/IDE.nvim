@@ -58,7 +58,6 @@ function IDE:get_projects()
 end
 
 function IDE:pick_file(rootdir)
-    vim.pretty_print(rootdir)
     local PickerDialog = require("ide.ui.dialogs.picker")
     local p = Utils.read_json(Path:new(tostring(rootdir), self.config.project_file))
 
@@ -173,7 +172,7 @@ local function setup(config)
         local ProjectsDialog = require("ide.internal.dialogs.projectsdialog")
 
         local dlgprojects = ProjectsDialog(ide, {
-            change = function(t)
+            changed = function(t)
                 ide:pick_file(t:get_current_row().root)
             end
         })

@@ -2,7 +2,6 @@ return {
     ignore_filetypes = { },
     root_patterns = {".git/"},
     shadow_build = false,
-    auto_create = true,
     debug = false,
     build_dir = "build",
     project_file = "project.nvide",

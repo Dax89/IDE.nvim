@@ -1,5 +1,6 @@
 return {
     Button = require("ide.ui.components.button"),
+    CheckBox = require("ide.ui.components.checkbox"),
     HLine = require("ide.ui.components.hline"),
     Input = require("ide.ui.components.input"),
     Label = require("ide.ui.components.label"),

@@ -10,14 +10,14 @@ function Dialog:init(title, options)
 
     private[self] = {
         showhelp = vim.F.if_nil(options.showhelp, true),
-        onaccept = options and options.onaccept or nil,
+        accept = options.accept,
         dblclick = false,
         extmarks = { },
         title = title,
     }
 
     self.model = Model({
-        change = function(model, k, newvalue, oldvalue)
+        changed = function(model, k, newvalue, oldvalue)
             self:on_model_changed(model, k, newvalue, oldvalue)
             self:render()
         end
@@ -91,8 +91,8 @@ function Dialog:accept()
 
     self:on_accept(self.model.data)
 
-    if vim.is_callable(private[self].onaccept) then
-        if private[self].onaccept(self.model.data, self) ~= false then
+    if vim.is_callable(private[self].accept) then
+        if private[self].accept(self.model.data, self) ~= false then
             self:close()
         end
     else
@@ -102,7 +102,7 @@ end
 
 function Dialog:popup(cb)
     if not self.hwin then
-        private[self].onaccept = cb
+        private[self].accept = cb
     end
 
     self:show()

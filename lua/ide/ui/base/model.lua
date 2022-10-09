@@ -39,8 +39,8 @@ function Model:_reset()
                     c:set_value(v)
                 end
 
-                if vim.is_callable(private[self].change) then
-                    private[self].change(t, k, v, oldv)
+                if vim.is_callable(private[self].changed) then
+                    private[self].changed(t, k, v, oldv)
                 end
             end
         end

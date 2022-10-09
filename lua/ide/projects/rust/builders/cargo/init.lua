@@ -1,10 +1,12 @@
 local Utils = require("ide.utils")
+local Path = require("plenary.path")
 local Builder = require("ide.base.builder")
+local Cells = require("ide.ui.components.cells")
 
 local Cargo = Utils.class(Builder)
 Cargo.BUILD_MODES = {"debug", "release"}
 
-function Cargo:_get_manifest()
+function Cargo:get_manifest()
     return self.project:execute("cargo", {"read-manifest"}, {json = true, src = true})
 end
 
@@ -12,8 +14,19 @@ function Cargo:get_type()
     return "cargo"
 end
 
-function Cargo:get_modes()
-    return Cargo.BUILD_MODES
+function Cargo:on_ready()
+    for _, m in ipairs(Cargo.BUILD_MODES) do
+        self.project:check_config(m, {
+            mode = m,
+            cwd = self.project:get_build_path(true, m),
+        })
+    end
+
+    if not self.project:get_selected_config() then
+        self.project:set_selected_config(Cargo.BUILD_MODES[1])
+    end
+
+    self.project:write()
 end
 
 function Cargo:create()
@@ -25,7 +38,7 @@ function Cargo:create()
 end
 
 function Cargo:get_targets()
-    local m = self:_get_manifest()
+    local m = self:get_manifest()
 
     return vim.tbl_map(function(t)
         return t.name
@@ -33,44 +46,61 @@ function Cargo:get_targets()
 end
 
 function Cargo:build()
-    local b = self.project:get_build_path()
+    self:check_settings(function(_, config)
+        local b = self.project:get_build_path()
 
-    local args = {
-        "build",
-        "--target-dir", tostring(b:parent())
-    }
+        local args = {
+            "build",
+            "--target-dir", tostring(b:parent())
+        }
 
-    local m = self.project:get_mode()
+        if config.mode ~= "debug" then
+            args = vim.list_extend(args, {"--profile", config.mode})
+        end
 
-    if m and m ~= "debug" then -- Cargo says that 'debug' is a reserved name
-        args = vim.list_extend(args, {"--profile", self.project:get_mode()})
-    end
+        b:mkdir({parents = true, exists_ok = true})
 
-    b:mkdir({parents = true, exists_ok = true})
+        self.project:new_job("cargo", args, {
+            title = "Cargo - Build",
+            state = "build"
+        })
+    end)
+end
 
-    self.project:new_job("cargo", args, {
-        title = "Cargo - Build",
-        state = "build"
-    })
+function Cargo:run()
+    self:check_settings(function(_, config)
+        self:check_and_run(Path:new(self.project:get_build_path(true), config.target), config.cmdline, config)
+    end)
 end
 
 function Cargo:debug(options)
-    local Path = require("plenary.path")
-    options = options or { }
-
-    self.project:run_dap({
-        request = "launch",
-        type = "codelldb",
-        program = tostring(Path:new(self.project:get_build_path(true), self.project:get_option("target"))),
-    }, options)
+    self:check_settings(function(_, config)
+        self.project:run_dap({
+            request = "launch",
+            type = "codelldb",
+            program = tostring(Path:new(self.project:get_build_path(true), config.target)),
+            args = config.cmdline,
+        }, options or { })
+    end)
 end
 
-function Builder:settings()
-    local d = require("ide.internal.dialogs")
+function Cargo:settings()
+    local dlg = self:get_settings_dialog()
 
-    d.BuilderDialog(self, {save = true}):popup(function()
-        self.project:write()
-    end)
+    if dlg then
+        dlg(self, {
+            {
+                name = "mode", label = "Mode", type = Cells.SelectCell,
+                items = function() return self:get_modes() end
+            },
+            {
+                name = "target", label = "Target", type = Cells.SelectCell,
+                items = function() return self:get_targets() end
+            },
+            {name = "cmdline", label = "Command Line", type = Cells.InputCell},
+            {name = "cwd", label = "Working Dir", type = Cells.PickerCell},
+        }):popup()
+    end
 end
 
 return Cargo

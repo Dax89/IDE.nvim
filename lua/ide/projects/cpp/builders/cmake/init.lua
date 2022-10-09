@@ -1,6 +1,7 @@
 local Utils = require("ide.utils")
 local Path = require("plenary.path")
 local Builder = require("ide.base.builder")
+local Cells = require("ide.ui.components.cells")
 
 local CMake = Utils.class(Builder)
 CMake.BUILD_MODES = {"Debug", "Release", "RelWithDebInfo", "MinSizeRel"}
@@ -11,9 +12,18 @@ function CMake:get_type()
 end
 
 function CMake:on_ready()
-    if not self.project:get_mode() then
-        self.project:set_mode(CMake.BUILD_MODES[1])
+    for _, m in ipairs(CMake.BUILD_MODES) do
+        self.project:check_config(m, {
+            mode = m,
+            cwd = self.project:get_build_path(true, m),
+        })
     end
+
+    if not self.project:get_selected_config() then
+        self.project:set_selected_config(CMake.BUILD_MODES[1])
+    end
+
+    self.project:write()
 end
 
 function CMake:_write_query(q)
@@ -55,24 +65,18 @@ function CMake:_configure(options)
     options = options or { }
     self:_write_query("codemodel-v2")
 
+    local selcfg = self.project:get_selected_config()
+
     self.project:new_job("cmake", {
         "-B", self.project:get_build_path(true),
         "-DCMAKE_EXPORT_COMPILE_COMMANDS=1",
-        "-DCMAKE_BUILD_TYPE=" .. self.project:get_mode()
+        "-DCMAKE_BUILD_TYPE=" .. selcfg.mode
     }, vim.tbl_extend("keep", {title = "CMake - Configure", src = true, state = "configure"}, options))
 
     local compilecommands = Path:new(self.project:get_build_path(), "compile_commands.json")
 
     if compilecommands:is_file() then
         compilecommands:copy({destination = Path:new(self.project:get_path(), "compile_commands.json" )})
-    end
-
-    if not self.project:get_target() then
-        local targets = self:get_targets()
-        if not vim.tbl_isempty(targets) then
-            self.project:set_target(targets[1])
-            self.project:write()
-        end
     end
 end
 
@@ -82,10 +86,10 @@ function CMake:configure()
 end
 
 function CMake:build(_, onexit)
-    self:check_settings(function()
+    self:check_settings(function(_, config)
         local args = {
             "--build", ".",
-            "--config", self.project:get_mode(),
+            "--config", config.mode,
             "-j" .. Utils.get_number_of_cores(),
         }
 
@@ -94,12 +98,12 @@ function CMake:build(_, onexit)
 end
 
 function CMake:run()
-    self:check_settings(function(_, _, target)
-        local targetdata = self:_read_query("target-" .. target)
+    self:check_settings(function(_, config)
+        local targetdata = self:_read_query("target-" .. config.target)
 
         if targetdata then
             if targetdata.type == "EXECUTABLE" then
-                self:check_and_run(Path:new(self.project:get_build_path(true), targetdata.artifacts[1].path), target)
+                self:check_and_run(Path:new(self.project:get_build_path(true), targetdata.artifacts[1].path), config.cmdline, config)
             else
                 Utils.notify("Cannot run target of type '" .. targetdata.type .. "'")
             end
@@ -108,13 +112,33 @@ function CMake:run()
 end
 
 function CMake:debug(options)
-    options = options or { }
+    self:check_settings(function(_, config)
+        self.project:run_dap({
+            request = "launch",
+            type = "codelldb",
+            program = tostring(Path:new(self.project:get_build_path(true), config.target)),
+            args = config.cmdline,
+        }, options or { })
+    end)
+end
 
-    self.project:run_dap({
-        request = "launch",
-        type = "codelldb",
-        program = tostring(Path:new(self.project:get_build_path(true), self.project:get_option("target"))),
-    }, options)
+function CMake:settings()
+    local dlg = self:get_settings_dialog()
+
+    if dlg then
+        dlg(self, {
+            {
+                name = "mode", label = "Mode", type = Cells.SelectCell,
+                items = function() return self:get_modes() end
+            },
+            {
+                name = "target", label = "Target", type = Cells.SelectCell,
+                items = function() return self:get_targets() end
+            },
+            {name = "cmdline", label = "Command Line", type = Cells.InputCell},
+            {name = "cwd", label = "Working Dir", type = Cells.PickerCell},
+        }):popup()
+    end
 end
 
 return CMake

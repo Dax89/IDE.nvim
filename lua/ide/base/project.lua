@@ -20,8 +20,9 @@ function Project:init(config, path, name, builder)
         mode = nil,
         target = nil,
         builder = builder,
-        options = { },
-        runargs = { }
+        vars = { },
+        selconfig = nil,
+        config = { },
     }
 
     local projfile = Path:new(self.path, config.project_file)
@@ -42,10 +43,6 @@ function Project:init(config, path, name, builder)
         end
 
         self.builder = BuilderType(self)
-    end
-
-    if self.config.auto_create then
-        self:save()
     end
 end
 
@@ -77,12 +74,42 @@ function Project:get_type()
     return nil
 end
 
-function Project:set_runargs(target, args)
-    self.data.runargs[target] = (args ~= nil and args ~= "") and args or nil
+function Project:get_selected_config()
+    return self.data.config[self.data.selconfig]
 end
 
-function Project:get_runargs(target)
-    return target and (self.data.runargs[target] or "") or ""
+function Project:set_selected_config(v)
+    if self.data.config[v] == nil then
+        error("Configuration '" .. v .. "' not found")
+    else
+        self.data.selconfig = v
+    end
+end
+
+function Project:check_config(name, config)
+    if self.data.config[name] == nil then
+        self:set_config(name, config)
+    end
+
+    return self.data.config[name]
+end
+
+function Project:set_config(name, config)
+    vim.validate({
+        name = {name, "string"},
+        config = {config, {"table", "nil"}},
+    })
+
+    config.name = name
+    self.data.config[name] = config
+end
+
+function Project:get_config(name)
+    vim.validate({
+        name = {name, {"string", "nil"}},
+    })
+
+    return name == nil and self.data.config or self.data.config[name]
 end
 
 function Project:is_virtual()
@@ -95,28 +122,12 @@ function Project.check(filepath, config)
     }, config)
 end
 
-function Project:set_option(k, v)
-    self.data.options[k] = v
+function Project:set_var(k, v)
+    self.data.vars[k] = v
 end
 
-function Project:get_option(k)
-    return self.data.options[k]
-end
-
-function Project:set_mode(m)
-    self.data.mode = m
-end
-
-function Project:get_mode()
-    return self.data.mode
-end
-
-function Project:set_target(t)
-    self.data.target = t
-end
-
-function Project:get_target()
-    return self.data.target
+function Project:get_var(k)
+    return self.data.var[k]
 end
 
 function Project:get_template_path()
@@ -128,24 +139,31 @@ function Project:get_path(raw)
     return raw and self.path or Path:new(self.path)
 end
 
-function Project:get_build_path(raw)
-    local p = nil
+function Project:get_build_path(raw, mode)
+    local p, selcfg = nil, self:get_selected_config()
+
+    if not mode and selcfg then
+        mode = selcfg.mode
+    end
 
     if self.config.shadow_build then
-        if self:get_mode() then
-            p = Path:new(self:get_path(), "..", "build_" .. self.data.name .. "_" .. self:get_mode())
+        if mode then
+            p = Path:new(self:get_path(), "..", "build_" .. self.data.name .. "_" .. mode)
         else
             p = Path:new(self:get_path(), "..", "build_" .. self.data.name)
         end
     else
-        if self:get_mode() then
-            p = Path:new(self:get_path(), "build", self:get_mode())
+        if mode then
+            p = Path:new(self:get_path(), "build", mode)
         else
             p = Path:new(self:get_path(), "build")
         end
     end
 
-    assert(p ~= nil)
+    if p == nil then
+        error("Project: Cannot get build path")
+    end
+
     return raw and tostring(p) or p
 end
 
@@ -348,7 +366,7 @@ function Project:run_dap(dapoptions, options)
     else
         Dap.run(vim.tbl_extend("force", {
             name = self.data.name,
-            cwd = self:get_build_path(true)
+            cwd = vim.F.if_nil(options.cwd, self:get_build_path(true))
         }, dapoptions), {
             before = function(config)
                 self:set_state("debug")
