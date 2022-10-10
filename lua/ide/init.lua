@@ -71,6 +71,23 @@ function IDE:pick_file(rootdir)
     end, {cwd = rootdir, limitroot = true})
 end
 
+function IDE:_check_loaded(filepath)
+    local cwd = vim.fn.getcwd()
+
+    for _, p in ipairs(filepath:parents()) do
+        if self.projects[p] ~= nil then
+
+            if cwd ~= p then
+                vim.api.nvim_set_current_dir(p)
+            end
+
+            return true
+        end
+    end
+
+    return false
+end
+
 function IDE:project_check(filepath, filetype)
     if #filetype == 0 or vim.tbl_contains(self.config.ignore_filetypes, filetype) then
         return
@@ -79,7 +96,7 @@ function IDE:project_check(filepath, filetype)
     -- HACK: Workaround for empty 'p' when filepath is 'Path'
     local p = type(filepath) == "table" and filepath or Path:new(filepath)
 
-    if not p:exists() then
+    if not p:exists() or self:_check_loaded(p) then
         return
     end
 
