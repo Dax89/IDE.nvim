@@ -39,7 +39,7 @@ function TablePopup:init(header, data, title, options)
         zindex = 50
     })
 
-    self:_update_table()
+    self:update()
     self:map("a", function() self:on_add() end, {builtin = true})
     self:map("d", function() self:on_remove() end, {builtin = true})
     self:map({"j", "<Down>"}, function() self:on_move_down() end, {builtin = true})
@@ -94,7 +94,7 @@ function TablePopup:on_add()
 
     assert(vim.tbl_islist(newrow))
     table.insert(private[self].data, 1, newrow)
-    self:_update_table()
+    self:update()
 end
 
 function TablePopup:_do_accept()
@@ -169,7 +169,7 @@ function TablePopup:on_move_right()
     end
 end
 
-function TablePopup:_update_table()
+function TablePopup:update()
     if vim.tbl_isempty(private[self].header) then
         error("TablePopup: Header is empty")
     end
@@ -225,7 +225,7 @@ function TablePopup:_update_table()
                                 })
                             end
 
-                            self:_update_table()
+                            self:update()
                         end
                     end
                 }
@@ -266,7 +266,7 @@ function TablePopup:_update_table()
 
         if needsactions then
             table.insert(buttons, Components.Button(private[self].actiontext, {
-                key = "m",
+                key = "z",
                 col = 1,
 
                 event = function()
@@ -340,7 +340,7 @@ function TablePopup:_update_index(rowindex, colindex, force)
     end
 
     if changed then
-        self:_update_table()
+        self:update()
 
         if vim.is_callable(private[self].selected) then
             private[self].selected(self, self:get_current_row(), self:get_current_col())

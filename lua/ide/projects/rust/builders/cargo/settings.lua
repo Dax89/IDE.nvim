@@ -1,18 +1,16 @@
 local Utils = require("ide.utils")
 local Dialogs = require("ide.internal.dialogs")
 
-local CMakeSettings = Utils.class(Dialogs.ConfigDialog)
+local CargoSettings = Utils.class(Dialogs.ConfigDialog)
 
-function CMakeSettings:init(builder, header)
+function CargoSettings:init(builder, header)
     builder:configure()
 
     Dialogs.ConfigDialog.init(self, builder, header, {
-        actions = {"Configure", "Assign Target"},
+        actions = {"Assign Target"},
 
         actionselected = function(_, idx)
             if idx == 1 then
-                builder:configure()
-            elseif idx == 2 then
                 vim.ui.select(builder:get_targets(), {
                     prompt = "Targets"
                 },
@@ -28,7 +26,7 @@ function CMakeSettings:init(builder, header)
     vim.api.nvim_command("wincmd p")
 end
 
-function CMakeSettings:assign_target(target)
+function CargoSettings:assign_target(target)
     for _, d in ipairs(self:get_data()) do
         d.target = target
     end
@@ -36,4 +34,5 @@ function CMakeSettings:assign_target(target)
     self:update() -- NOTE: Find a better implementation
 end
 
-return CMakeSettings
+return CargoSettings
+
