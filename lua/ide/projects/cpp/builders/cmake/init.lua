@@ -12,29 +12,35 @@ function CMake:get_type()
 end
 
 function CMake:on_ready()
-    for _, m in ipairs(CMake.BUILD_MODES) do
-        self.project:check_config(m, {
-            mode = m,
-            cwd = self.project:get_build_path(true, m),
-        })
-    end
+    self:_configure({
+        onexit = function()
+            local hasdefaulttarget = vim.tbl_contains(self:get_targets(CMake.BUILD_MODES[1]), self.project:get_name())
 
-    if not self.project:get_selected_config() then
-        self.project:set_selected_config(CMake.BUILD_MODES[1])
-    end
+            for _, m in ipairs(CMake.BUILD_MODES) do
+                self.project:check_config(m, {
+                    mode = m,
+                    cwd = self.project:get_build_path(true, m),
+                    target = hasdefaulttarget and self.project:get_name() or nil
+                })
+            end
 
-    self.project:write()
+            if not self.project:get_selected_config() then
+                self.project:set_selected_config(CMake.BUILD_MODES[1])
+            end
+
+            self.project:write()
+        end
+    }, CMake.BUILD_MODES[1])
 end
 
-function CMake:_write_query(q)
-    local p = Path:new(self.project:get_build_path(), ".cmake", "api", CMake.API_VERSION, "query")
+function CMake:_write_query(q, mode)
+    local p = Path:new(self.project:get_build_path(false, mode), ".cmake", "api", CMake.API_VERSION, "query")
     p:mkdir({parents = true, exists_ok = true})
-    local qobj = Path:new(p, q)
-    qobj:touch()
+    Path:new(p, q):touch()
 end
 
-function CMake:_read_query(q)
-    local p = Path:new(self.project:get_build_path(), ".cmake", "api", CMake.API_VERSION, "reply")
+function CMake:_read_query(q, mode)
+    local p = Path:new(self.project:get_build_path(false, mode), ".cmake", "api", CMake.API_VERSION, "reply")
 
     for _, f in ipairs(require("plenary.scandir").scan_dir(tostring(p), {add_dirs = false, depth = 1})) do
         if vim.startswith(Utils.get_filename(f), q) then
@@ -49,8 +55,12 @@ function CMake:get_modes()
     return CMake.BUILD_MODES
 end
 
-function CMake:get_targets()
-    local codemodel = self:_read_query("codemodel-v2")
+function CMake:get_targets(mode)
+    if not mode then
+        mode = self.project:get_selected_config().mode
+    end
+
+    local codemodel = self:_read_query("codemodel-v2", mode)
 
     if codemodel and codemodel.configurations and not vim.tbl_isempty(codemodel.configurations) then
         return vim.tbl_map(function(t)
@@ -61,16 +71,18 @@ function CMake:get_targets()
     return {}
 end
 
-function CMake:_configure(options)
+function CMake:_configure(options, mode)
     options = options or { }
-    self:_write_query("codemodel-v2")
+    self:_write_query("codemodel-v2", mode)
 
-    local selcfg = self.project:get_selected_config()
+    if not mode then
+        mode = self.project:get_selected_config().mode
+    end
 
     self.project:new_job("cmake", {
-        "-B", self.project:get_build_path(true),
+        "-B", self.project:get_build_path(true, mode),
         "-DCMAKE_EXPORT_COMPILE_COMMANDS=1",
-        "-DCMAKE_BUILD_TYPE=" .. selcfg.mode
+        "-DCMAKE_BUILD_TYPE=" .. mode,
     }, vim.tbl_extend("keep", {title = "CMake - Configure", src = true, state = "configure"}, options))
 
     local compilecommands = Path:new(self.project:get_build_path(), "compile_commands.json")
@@ -93,7 +105,11 @@ function CMake:build(_, onexit)
             "-j" .. Utils.get_number_of_cores(),
         }
 
-        self.project:new_job("cmake", args, {title = "CMake - Build", state = "build", onexit = onexit})
+        self.project:new_job("cmake", args, {
+            title = "CMake - Build",
+            state = "build",
+            onexit = onexit
+        })
     end)
 end
 
@@ -137,7 +153,9 @@ function CMake:settings()
             },
             {name = "cmdline", label = "Command Line", type = Cells.InputCell},
             {name = "cwd", label = "Working Dir", type = Cells.PickerCell},
-        }):popup()
+        }):popup(function()
+            self:configure()
+        end)
     end
 end
 
