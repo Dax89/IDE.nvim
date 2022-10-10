@@ -9,6 +9,7 @@
   <br>
   <br>
   Nice Project Management, Build, and Debug support for various type of programming languages.<br>
+<img src="https://user-images.githubusercontent.com/1503603/194844513-956f9b25-aec1-4cbc-92be-058ad4ae05ab.png" width="45%"></img> <img src="https://user-images.githubusercontent.com/1503603/194843583-9799f5a1-b029-4777-a0bd-4747b6c031c1.png" width="45%"></img> <img src="https://user-images.githubusercontent.com/1503603/194843504-66b22078-5ddf-4f68-ad28-278f72ef74eb.png" width="45%"></img> <img src="https://user-images.githubusercontent.com/1503603/194843413-d4ed0128-2203-4bd4-ad85-6cc20427d16c.png" width="45%"></img> 
 </p>
 
 # Installation
