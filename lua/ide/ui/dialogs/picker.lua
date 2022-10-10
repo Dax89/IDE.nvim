@@ -41,9 +41,9 @@ local function select_item(path, onchoice, options, level)
                 if not is_root(choice) then
                     select_item(path:parent(), onchoice, options, level - 1)
                 end
-            elseif choice:is_dir() then
+            elseif type(choice) == "table" and choice:is_dir() then
                 select_item(Path:new(choice), onchoice, options, level + 1)
-            elseif not options.only_dirs and choice:is_file() then
+            elseif not options.only_dirs and (type(choice) == "table" and choice:is_file()) then
                 onchoice(choice)
             end
         end
