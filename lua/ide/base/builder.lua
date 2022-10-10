@@ -69,7 +69,7 @@ function Builder:check_and_run(filepath, args, config)
             end
         end)
     else
-        self.project:new_job(p, args, {title = "Run - " .. config.name or Utils.get_filename(p), state = "run"})
+        self:do_run(p, args, config)
     end
 end
 
