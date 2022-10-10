@@ -154,14 +154,10 @@ function Project:get_build_path(raw, name)
         end
     else
         if name then
-            p = Path:new(self:get_path(), "build", name)
+            p = Path:new(self:get_path(), "build" .. "_" .. name)
         else
             p = Path:new(self:get_path(), "build")
         end
-    end
-
-    if p == nil then
-        error("Project: Cannot get build path")
     end
 
     return raw and tostring(p) or p
