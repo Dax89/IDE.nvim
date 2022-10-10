@@ -139,22 +139,22 @@ function Project:get_path(raw)
     return raw and self.path or Path:new(self.path)
 end
 
-function Project:get_build_path(raw, mode)
+function Project:get_build_path(raw, name)
     local p, selcfg = nil, self:get_selected_config()
 
-    if not mode and selcfg then
-        mode = selcfg.mode
+    if not name and selcfg then
+        name = selcfg.name
     end
 
     if self.config.shadow_build then
-        if mode then
-            p = Path:new(self:get_path(), "..", "build_" .. self.data.name .. "_" .. mode)
+        if name then
+            p = Path:new(self:get_path(), "..", "build_" .. self.data.name .. "_" .. name)
         else
             p = Path:new(self:get_path(), "..", "build_" .. self.data.name)
         end
     else
-        if mode then
-            p = Path:new(self:get_path(), "build", mode)
+        if name then
+            p = Path:new(self:get_path(), "build", name)
         else
             p = Path:new(self:get_path(), "build")
         end
