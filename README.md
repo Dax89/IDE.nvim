@@ -9,7 +9,7 @@
   <br>
   <br>
   Nice Project Management, Build, and Debug support for various type of programming languages.<br>
-<img src="https://user-images.githubusercontent.com/1503603/194844513-956f9b25-aec1-4cbc-92be-058ad4ae05ab.png" width="45%"></img> <img src="https://user-images.githubusercontent.com/1503603/194843583-9799f5a1-b029-4777-a0bd-4747b6c031c1.png" width="45%"></img> <img src="https://user-images.githubusercontent.com/1503603/194843504-66b22078-5ddf-4f68-ad28-278f72ef74eb.png" width="45%"></img> <img src="https://user-images.githubusercontent.com/1503603/194843413-d4ed0128-2203-4bd4-ad85-6cc20427d16c.png" width="45%"></img> 
+<img src="https://user-images.githubusercontent.com/1503603/194845728-12a96084-a6d3-4177-a5a4-ad24d3a7c052.png" width="45%"></img> <img src="https://user-images.githubusercontent.com/1503603/194845734-66b6a95d-ca9e-4ec0-9790-4175f1b0924d.png" width="45%"></img> <img src="https://user-images.githubusercontent.com/1503603/194845741-c3ef1237-31eb-4f2c-8cf2-bf5e8256af34.png" width="45%"></img> <img src="https://user-images.githubusercontent.com/1503603/194845747-7e60bf17-4bd0-4cbb-8113-c5e3b2edca5d.png" width="45%"></img> 
 </p>
 
 # Installation
