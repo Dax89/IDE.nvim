@@ -4,7 +4,7 @@ local Builder = require("ide.base.builder")
 local Cells = require("ide.ui.components.cells")
 
 local Cargo = Utils.class(Builder)
-Cargo.BUILD_MODES = {"debug", "release"}
+Cargo.BUILD_MODES = {"debug", "release", "test", "bench"} -- https://doc.rust-lang.org/cargo/reference/profiles.html
 
 function Cargo:get_manifest()
     return self.project:execute("cargo", {"read-manifest"}, {json = true, src = true})
@@ -15,10 +15,13 @@ function Cargo:get_type()
 end
 
 function Cargo:on_ready()
+    local hasdefaulttarget = vim.tbl_contains(self:get_targets(), self.project:get_name())
+
     for _, m in ipairs(Cargo.BUILD_MODES) do
         self.project:check_config(m, {
             mode = m,
             cwd = self.project:get_build_path(true, m),
+            target = hasdefaulttarget and self.project:get_name() or nil
         })
     end
 
@@ -45,7 +48,7 @@ function Cargo:get_targets()
     end, m.targets)
 end
 
-function Cargo:build()
+function Cargo:build(_, onexit)
     self:check_settings(function(_, config)
         local b = self.project:get_build_path()
 
@@ -53,6 +56,10 @@ function Cargo:build()
             "build",
             "--target-dir", tostring(b:parent())
         }
+
+        if config.mode == "release" then
+            args = vim.list_extend(args, {"-r"})
+        end
 
         if config.mode ~= "debug" then
             args = vim.list_extend(args, {"--profile", config.mode})
@@ -62,7 +69,8 @@ function Cargo:build()
 
         self.project:new_job("cargo", args, {
             title = "Cargo - Build",
-            state = "build"
+            state = "build",
+            onexit = onexit,
         })
     end)
 end
