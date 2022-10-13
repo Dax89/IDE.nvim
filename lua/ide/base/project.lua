@@ -1,6 +1,7 @@
 local Utils = require("ide.utils")
 local Path = require("plenary.path")
 local Runner = require("ide.base.runner")
+local Log = require("ide.log")
 
 local Project = Utils.class(Runner)
 
@@ -38,7 +39,9 @@ function Project:init(config, path, name, builder)
     if builder then
         local ok, BuilderType = pcall(require, "ide.projects." .. self:get_type() .. ".builders." .. builder)
 
-        if not ok then
+        if ok then
+            Log.debug("Project: Loading '" .. self:get_name() .. "', type: '" .. self:get_type() .. "', builder: '" .. builder .. "'")
+        else
             error("Builder '" .. builder .. "' not found")
         end
 
@@ -194,16 +197,20 @@ end
 
 function Project.guess_project(filepath, type, options, config)
     local p = Path:new(tostring(filepath))
+    Log.debug("Project.guess_project(): FilePath is '" .. tostring(filepath) .. "'")
 
     -- Check if is a GIT Submodule
+    Log.debug("Project.guess_project(): Searching root in GIT submodules")
     local gitroot, ret = Utils.os_execute("git", {"rev-parse", "--show-superproject-working-tree"}, tostring(p))
 
     -- Check if is a GIT Repo
     if ret == 0 and vim.tbl_isempty(gitroot) then
+        Log.debug("Project.guess_project(): Searching root dir in GIT repo")
         gitroot, ret = Utils.os_execute("git", {"rev-parse", "--show-toplevel"}, tostring(p))
     end
 
     if ret ~= 0 or vim.tbl_isempty(gitroot) then
+        Log.debug("Project.guess_project(): Searching root in FS")
         p = Project._find_root_in_fs(filepath, options)
     else
         p = gitroot[1]
@@ -213,8 +220,11 @@ function Project.guess_project(filepath, type, options, config)
     local pattern = Project._find_pattern_in_fs(p, options)
 
     if not pattern then
+        Log.warn("Project.guess_project(): Pattern NOT FOUND in " .. tostring(p))
         return nil
     end
+
+    Log.debug("Project.guess_project(): RootPath is '" .. tostring(p) .. "', selected pattern: '" .. pattern .. "'")
 
     local name = vim.fn.fnamemodify(p, ":t")
     local projfile = Path:new(p, config.project_file)
@@ -226,6 +236,7 @@ function Project.guess_project(filepath, type, options, config)
             return nil
         end
 
+        Log.debug("Project.guess_project(): '" .. config.project_file .. "' loaded, name is '" .. nvide.name .. "'")
         name = nvide.name
     end
 
@@ -239,8 +250,11 @@ function Project:untemplate()
     local tp = self:get_template_path()
 
     if not tp then
+        Log.debug("Project.untemplate(): No templates available");
         return
     end
+
+    Log.debug("Project.untemplate(): Processing templates from ", tostring(tp))
 
     tp:copy({
         destination = self:get_path(),

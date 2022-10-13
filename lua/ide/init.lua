@@ -1,5 +1,6 @@
 local Utils = require("ide.utils")
 local Path = require("plenary.path")
+local Log = require("ide.log")
 
 local IDE = Utils.class()
 
@@ -81,12 +82,16 @@ function IDE:_check_loaded(filepath)
                 vim.api.nvim_set_current_dir(p)
             end
 
+            Log.debug("IDE._check_loaded(): Project '" .. self.projects[p]:get_name() .. "' already loaded, skipping...")
             return true
         end
     end
 
     return false
 end
+
+-- function IDE:_check_projectfile(filepath)
+-- end
 
 function IDE:project_check(filepath, filetype)
     if #filetype == 0 or vim.tbl_contains(self.config.ignore_filetypes, filetype) then
@@ -103,6 +108,7 @@ function IDE:project_check(filepath, filetype)
     local ok, ProjectType = pcall(require, string.format("ide.projects.%s", filetype))
 
     if not ok then
+        Log.debug("IDE.project_check(): Project not found for filetype '" .. filepath .. "' loading default")
         ProjectType = require("ide.base.project") -- Try to guess a generic project
     end
 
@@ -117,6 +123,8 @@ function IDE:project_check(filepath, filetype)
             vim.defer_fn(function()
                 project:on_ready()
             end, 1000)
+        else
+            Log.debug("IDE.project_check(): Project: '" .. self.project[res.root] .. "' already loaded, skipping...")
         end
 
         self.active = res.root
@@ -172,6 +180,12 @@ local ide = nil
 
 local function setup(config)
     config = vim.tbl_deep_extend("force", require("ide.config"), config or { })
+
+    if type(config.debug) == "string" then
+        Log.level = config.debug
+    else
+        Log.level = config.debug and "trace" or "info"
+    end
 
     ide = IDE(config)
     local groupid = vim.api.nvim_create_augroup("NVimIDE", {clear = true})
