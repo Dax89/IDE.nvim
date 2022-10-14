@@ -90,8 +90,20 @@ function IDE:_check_loaded(filepath)
     return false
 end
 
--- function IDE:_check_projectfile(filepath)
--- end
+function IDE:_check_projectfile(filepath)
+    for _, p in ipairs(filepath:parents()) do
+        local fp = Path:new(p, self.config.project_file)
+
+        if fp:is_file() then
+            Log.debug("IDE._check_projectfile(): '" .. self.config.project_file .. "' found in '" .. p .. "'")
+            local projcfg = Utils.read_json(fp)
+            projcfg.root = p
+            return projcfg
+        end
+    end
+
+    return nil
+end
 
 function IDE:project_check(filepath, filetype)
     if #filetype == 0 or vim.tbl_contains(self.config.ignore_filetypes, filetype) then
@@ -105,32 +117,35 @@ function IDE:project_check(filepath, filetype)
         return
     end
 
-    local ok, ProjectType = pcall(require, string.format("ide.projects.%s", filetype))
+    local projcfg = self:_check_projectfile(p)
+    local ok, ProjectType = pcall(require, string.format("ide.projects.%s", projcfg and projcfg.type or filetype))
 
     if not ok then
         Log.debug("IDE.project_check(): Project not found for filetype '" .. filepath .. "' loading default")
         ProjectType = require("ide.base.project") -- Try to guess a generic project
     end
 
-    local res = ProjectType.check(p:is_file() and p:parent() or p, self.config)
+    if not projcfg then
+        projcfg = ProjectType.check(p:is_file() and p:parent() or p, self.config)
+    end
 
-    if res then
-        if not self.projects[res.root] then
-            local project = ProjectType(self.config, res.root, res.name, res.builder)
-            self.projects[res.root] = project
+    if projcfg then
+        if not self.projects[projcfg.root] then
+            local project = ProjectType(self.config, projcfg.root, projcfg.name, projcfg.builder)
+            self.projects[projcfg.root] = project
             self:_update_recents(project)
 
             vim.defer_fn(function()
                 project:on_ready()
             end, 1000)
         else
-            Log.debug("IDE.project_check(): Project: '" .. self.project[res.root] .. "' already loaded, skipping...")
+            Log.debug("IDE.project_check(): Project: '" .. self.project[projcfg.root] .. "' already loaded, skipping...")
         end
 
-        self.active = res.root
+        self.active = projcfg.root
 
-        if vim.fn.getcwd() ~= res.root then
-            vim.api.nvim_set_current_dir(res.root)
+        if vim.fn.getcwd() ~= projcfg.root then
+            vim.api.nvim_set_current_dir(projcfg.root)
         end
     end
 end
