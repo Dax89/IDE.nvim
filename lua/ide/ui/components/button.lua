@@ -6,8 +6,25 @@ local Button = Utils.class(Label)
 
 function Button:init(text, options)
     options = options or { }
-    self.background = vim.F.if_nil(options.background, "primary")
-    self.foreground = vim.F.if_nil(options.foreground, "primary")
+
+    self.flat = vim.F.if_nil(options.flat, false)
+    self.align = vim.F.if_nil(options.align, "center")
+
+    if type(options.background) == "string" then
+        self.background = options.background
+    elseif self.flat then
+        self.background = nil
+    else
+        self.background = "primary"
+    end
+
+    if type(options.foreground) == "string" then
+        self.foreground = options.foreground
+    elseif self.flat then
+        self.foreground = nil
+    else
+        self.foreground = "primary"
+    end
 
     private[self] = {
         event = options.event
