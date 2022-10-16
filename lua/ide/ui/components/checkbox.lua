@@ -12,6 +12,7 @@ function CheckBox:init(label, checked, options)
 
     private[self] = {
         showlabel = vim.F.if_nil(options.showlabel, true),
+        flat = vim.F.if_nil(options.flat, false),
         checked = checked == true,
         changed = options.changed,
     }
@@ -36,7 +37,13 @@ function CheckBox:get_value()
 end
 
 function CheckBox:render(buffer)
-    local s = private[self].checked == true and "" or ""
+    local s = ""
+
+    if private[self].flat then
+        s = private[self].checked == true and "" or ""
+    else
+        s = private[self].checked == true and "" or ""
+    end
 
     if private[self].showlabel and #self.label > 0 then
         s = s .. " " .. self.label
