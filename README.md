@@ -75,7 +75,7 @@ require("ide").setup({
 - `Z`: Move to previous tab/wizard step
 - `M`: Move to next tab/wizard step
 - `hjkl` and `arrow keys`: row/column selection for Table
-- `Left Click`: Triggers the component's default event
+- `Enter/Left Click`: Triggers the component's default event
 
 # Commands
 - `IdeRecentProjects`: Show recent projects
