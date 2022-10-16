@@ -14,6 +14,10 @@ function IDE:init(config)
     require("ide.integrations.dap").setup(config)
 end
 
+function IDE:has_integration(name)
+    return self.config.integrations[name] and self.config.integrations[name].enable == true
+end
+
 function IDE:load_recents()
     local recentspath = Path:new(self._storage, "recents.json")
     local recents = { }

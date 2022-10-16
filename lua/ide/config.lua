@@ -33,5 +33,9 @@ return {
         dapui = {
             enable = false
         },
+
+        git = {
+            enable = false
+        }
     }
 }
