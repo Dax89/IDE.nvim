@@ -68,6 +68,15 @@ require("ide").setup({
 })
 ```
 
+# UI Keybinds
+- `z`: Show actions (used in Tabs component, it's the bottom left button)
+- `A`: Accept (used in Dialog and Tabs components, it's the bottom right button)
+- `Ctrl-H`: Show components' keybinds
+- `Z`: Move to previous tab/wizard step
+- `M`: Move to next tab/wizard step
+- `hjkl` and `arrow keys`: row/column selection for Table
+- `Left Click`: Triggers the component's default event
+
 # Commands
 - `IdeRecentProjects`: Show recent projects
 - `IdeProjectCreate`: Open a dialog which allows to create new projects
