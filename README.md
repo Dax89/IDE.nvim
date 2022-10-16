@@ -9,7 +9,7 @@
   <br>
   <br>
   Nice Project Management, Build, and Debug support for various type of programming languages.<br>
-<img src="https://user-images.githubusercontent.com/1503603/194845728-12a96084-a6d3-4177-a5a4-ad24d3a7c052.png" width="45%"></img> <img src="https://user-images.githubusercontent.com/1503603/194845734-66b6a95d-ca9e-4ec0-9790-4175f1b0924d.png" width="45%"></img> <img src="https://user-images.githubusercontent.com/1503603/194845741-c3ef1237-31eb-4f2c-8cf2-bf5e8256af34.png" width="45%"></img> <img src="https://user-images.githubusercontent.com/1503603/194845747-7e60bf17-4bd0-4cbb-8113-c5e3b2edca5d.png" width="45%"></img> 
+<img src="https://user-images.githubusercontent.com/1503603/196044470-2c2b42d1-5960-4f54-8a89-9761e24e5f46.png" width="45%"></img> <img src="https://user-images.githubusercontent.com/1503603/194845734-66b6a95d-ca9e-4ec0-9790-4175f1b0924d.png" width="45%"></img> <img src="https://user-images.githubusercontent.com/1503603/194845741-c3ef1237-31eb-4f2c-8cf2-bf5e8256af34.png" width="45%"></img> <img src="https://user-images.githubusercontent.com/1503603/194845747-7e60bf17-4bd0-4cbb-8113-c5e3b2edca5d.png" width="45%"></img> 
 </p>
 
 # Installation
@@ -35,7 +35,6 @@ require("ide").setup({
     root_patterns = {".git/"},
     shadow_build = false,
     debug = false,
-    build_dir = "build",
     project_file = "project.nvide",
     mappings = { },
 
@@ -63,9 +62,8 @@ require("ide").setup({
             }
         },
 
-        dapui = {
-            enable = false
-        }
+        dapui = { enable = false },
+        git = { enable = false },
     }
 })
 ```
