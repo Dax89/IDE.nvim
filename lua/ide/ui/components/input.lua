@@ -38,6 +38,10 @@ function Input:get_value()
     return private[self].value
 end
 
+function Input:get_display_value()
+    return string.format(private[self].format, private[self].value)
+end
+
 function Input:render(buffer)
     local s = ""
 
@@ -50,7 +54,7 @@ function Input:render(buffer)
     end
 
     if private[self].align == "left" then
-        return s .. " "  .. string.format(private[self].format, private[self].value), buffer
+        return s .. " "  .. self:get_display_value()
     end
 
     -- FIXME: self.label is not counted in alignment

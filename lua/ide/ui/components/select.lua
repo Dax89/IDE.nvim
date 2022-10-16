@@ -19,11 +19,39 @@ function Select:init(label, value, options)
 end
 
 function Select:_default_format_item(item)
-    if self:get_value() and item == self:get_value() then
+    if self:get_value() and (item == self:get_value() or item.value == self:get_value()) then
         return (item.text or item) .. " - SELECTED"
     end
 
     return item and item.text or item
+end
+
+function Select:_get_items()
+    local items = {}
+
+    if private[self].items then
+        if vim.is_callable(private[self].items) then
+            items = private[self].items(self)
+        elseif type(private[self].items) == "table" then
+            items = private[self].items
+        end
+    end
+
+    return items
+end
+
+function Select:get_display_value()
+    local items = self:_get_items()
+
+    if not vim.tbl_isempty(items) then
+        for _, item in ipairs(items) do
+            if item == self:get_value() or item.value == self:get_value() then
+                return item.text or item.value or item
+            end
+        end
+    end
+
+    return Input.get_display_value(self)
 end
 
 function Select:_find_selected(items)
@@ -39,15 +67,7 @@ function Select:_find_selected(items)
 end
 
 function Select:on_event(e)
-    local items = {}
-
-    if private[self].items then
-        if vim.is_callable(private[self].items) then
-            items = private[self].items(self)
-        elseif type(private[self].items) == "table" then
-            items = private[self].items
-        end
-    end
+    local items = self:_get_items()
 
     if vim.tbl_isempty(items) then
         return
