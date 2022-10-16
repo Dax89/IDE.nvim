@@ -1,6 +1,7 @@
 local Utils = require("ide.utils")
 local Window = require("ide.ui.base.window")
 local Model = require("ide.ui.base.model")
+local Screen = require("ide.ui.utils.screen")
 
 local private = Utils.private_stash()
 local Dialog = Utils.class(Window)
@@ -9,31 +10,44 @@ function Dialog:init(title, options)
     Window.init(self, options)
 
     private[self] = {
+        resetmodel = vim.F.if_nil(options.resetmodel, true),
         showhelp = vim.F.if_nil(options.showhelp, true),
         accept = options.accept,
         dblclick = false,
         extmarks = { },
         title = title,
-    }
+        components = { },
 
-    self.model = Model({
-        changed = function(model, k, newvalue, oldvalue)
-            self:on_model_changed(model, k, newvalue, oldvalue)
-            self:render()
-        end
-    })
+        model = Model({
+            changed = function(model, k, newvalue, oldvalue)
+                self:on_model_changed(model, k, newvalue, oldvalue)
+                self:render()
+            end
+        })
+    }
 
     self:_create_mapping()
 end
 
-function Dialog:set_cursor(row, col) -- Take care of the header
+function Dialog:_get_baseidx()
     local baseidx = 3
 
     if private[self].showhelp ~= true then
         baseidx = baseidx - 1
     end
 
-    Window.set_cursor(self, row == nil and row or row + baseidx, col)
+    return baseidx
+end
+
+function Dialog:get_model()
+    return private[self].model
+end
+
+function Dialog:set_cursor(row, col)
+    Window.set_cursor(self, row == nil and row or row + self:_get_baseidx(), col)
+end
+
+function Dialog:add_component(components)
 end
 
 function Dialog:set_components(components)
@@ -62,16 +76,22 @@ function Dialog:set_components(components)
         })
     end
 
-    if self.height <= 0 then
-        self.height = not vim.tbl_isempty(c) and #c or math.ceil(vim.o.lines * 0.75)
+    if self.height == nil or self.height <= 0 then
+        self.height = not vim.tbl_isempty(c) and #c or Screen.get_height("75%")
     end
 
+    private[self].components = c
     private[self].extmarks = { }
     self:unmap_all()
     self:clear()
 
-    -- Map keys, if needed
-    self.model:each_component(function(cc)
+    if private[self].resetmodel then
+        private[self].model:reset()
+    end
+
+    self:each_component(function(cc, i)
+        cc.row = i - 1
+
         if cc.key then
             if RESERVED_KEYS[cc.key] then
                 error("Key '" .. cc.key .. "' is reserved")
@@ -79,20 +99,39 @@ function Dialog:set_components(components)
 
             self:map(cc.key, function() self:_event(cc, "event") end)
         end
-    end, c)
 
-    self.model:set_components(c)
+        private[self].model:set_component(cc)
+    end)
+end
+
+function Dialog:each_component(cb)
+    local crow = 1
+
+    for _, row in ipairs(private[self].components) do
+        if row ~= nil then
+            local ccol, cl = 1, vim.tbl_islist(row) and row or {row}
+
+            for _, c in ipairs(cl) do
+                if c ~= nil then
+                    cb(c, crow, ccol)
+                    ccol = ccol + 1
+                end
+            end
+
+            crow = crow + 1
+        end
+    end
 end
 
 function Dialog:accept()
-    if not self.model:validate() then
+    if not private[self].model:validate() then
         return
     end
 
-    self:on_accept(self.model.data)
+    self:on_accept(private[self].model.data)
 
     if vim.is_callable(private[self].accept) then
-        if private[self].accept(self.model.data, self) ~= false then
+        if private[self].accept(private[self].model.data, self) ~= false then
             self:close()
         end
     else
@@ -119,7 +158,7 @@ end
 function Dialog:_find_component(row, col)
     row = row - 1
 
-    for _, crow in ipairs(self.model:get_components()) do
+    for _, crow in ipairs(private[self].components) do
         local cl = vim.tbl_islist(crow) and crow or {crow}
 
         for _, c in ipairs(cl) do
@@ -160,7 +199,7 @@ function Dialog:_event(c, type, row, col)
 
         update = function()
             if c.id then
-                self.model.data[c.id] = c:get_value()
+                private[self].model.data[c.id] = c:get_value()
             end
         end
     }
@@ -239,23 +278,23 @@ function Dialog:render()
 
     local UTF8 = require("ide.ui.utils.utf8")
 
-    for _, c in ipairs(self.model:get_components()) do
+    self:each_component(function(c)
         local d = c:render(self)
 
         if d then
-            local rowidx = self:calc_row(c) + 1
+            local rowidx = math.ceil(self:calc_row(c) + 1)
             local row = self.data[rowidx]
 
             if row then
                 local i, len = 0, UTF8.len(d)
 
-                for col = self:calc_col(c), #row - 1 do
+                for col = math.ceil(self:calc_col(c)), #row - 1 do
                     row[col + 1] = i < len and UTF8.char(d, i) or " "
                     i = i + 1
                 end
             end
         end
-    end
+    end)
 
     local lines = { }
 
@@ -266,9 +305,9 @@ function Dialog:render()
     self:commit(function()
         vim.api.nvim_buf_set_lines(self.hbuf, 0, -1, false, lines)
 
-        for i, c in ipairs(self.model:get_components()) do
+        self:each_component(function(c, i, j)
             if c.foreground or c.background or c.bold then
-                local n = ("highlight_nvide_%d"):format(i)
+                local n = ("highlight_nvide_%d_%d"):format(i, j)
 
                 local currhl, hlc = nil, hl(c.foreground, {"foreground", "background"})
 
@@ -287,10 +326,10 @@ function Dialog:render()
                 local start = self:calc_col(c)
 
                 for r = 0, self:calc_height(c) - 1 do
-                    vim.api.nvim_buf_add_highlight(self.hbuf, self.hns, n, c.row + r, start, start + self:calc_width(c))
+                    vim.api.nvim_buf_add_highlight(self.hbuf, self.hns, n, math.ceil(c.row + r), math.ceil(start), math.ceil(start + self:calc_width(c)))
                 end
             end
-        end
+        end)
     end)
 end
 
@@ -304,7 +343,7 @@ function Dialog:on_help()
         return
     end
 
-    for _, c in ipairs(self.model:get_components()) do
+    self:each_component(function(c)
         if c.key then
             local row, col = self:calc_row(c), self:calc_col(c)
 
@@ -313,10 +352,14 @@ function Dialog:on_help()
                 virt_text_pos = "overlay"
             }))
         end
-    end
+    end)
 end
 
-function Dialog:on_accept(model)
+function Dialog:set_height(h)
+    Window.set_height(self, h + self:_get_baseidx())
+end
+
+function Dialog:on_accept(data)
 end
 
 function Dialog:on_event()

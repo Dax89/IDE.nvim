@@ -4,10 +4,16 @@ local private = Utils.private_stash()
 local Model = Utils.class()
 
 function Model:init(options)
-    private[self] = vim.tbl_extend("keep", {
-        components = { },
-    }, options or { })
+    options = options or { }
 
+    private[self] = {
+        changed = options.changed
+    }
+
+    self:reset()
+end
+
+function Model:reset()
     self.data = self:_reset()
 end
 
@@ -15,8 +21,12 @@ function Model:_reset()
     return setmetatable({
         _data = { },
         _components = { },
-        add_component = function(m, c)
+        set_component = function(m, c)
             m._components[c.id] = c
+        end,
+        remove_component = function(m, id)
+            m._components[id] = nil
+            m._data[id] = nil
         end,
         get_component = function(m, id)
             return m._components[id]
@@ -64,37 +74,28 @@ function Model:validate(keys)
     return true
 end
 
-function Model:get_components()
-    return private[self].components
-end
-
-function Model:each_component(cb, components)
-    for i, row in ipairs(components or private[self].components) do
-        local cl = vim.tbl_islist(row) and row or {row}
-
-        for _, c in ipairs(cl) do
-            cb(c, i)
-        end
+function Model:remove_component(id)
+    if type(id) == "string" then
+        self.data:remove_component(id)
     end
 end
 
-function Model:set_components(components)
-    private[self].components = { }
-    self.data = self:_reset()
+function Model:set_component(c)
+    if c.id then
+        self.data:set_component(c)
+        self.data[c.id] = c:get_value()
+        return true
+    end
 
-    self:each_component(function(c, i)
-        c.row = i - 1
-        table.insert(private[self].components, c)
+    return false
+end
 
-        if c.id then
-            if self.data:get_component(c.id) then
-                error("Duplicate id '" .. c.id .. "'")
-            end
+function Model:check_component(c)
+    if c.id and not self.data:get_component(c.id)then
+        return self:set_component(c)
+    end
 
-            self.data:add_component(c)
-            self.data[c.id] = c:get_value()
-        end
-    end, components)
+    return false
 end
 
 return Model

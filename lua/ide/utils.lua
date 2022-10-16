@@ -105,6 +105,10 @@ function M.list_reverse(l)
     return rev
 end
 
+function M.if_nilempty(v)
+    return v == nil or #v <= 0
+end
+
 function M.notify(s, category, options)
     options = options or { }
 

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.11 FATAL_ERROR)
-project(:projectname: LANGUAGES CXX)
+project(:name: LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 
 option(ENABLE_ASAN "Enable Address Sanitizer" OFF)

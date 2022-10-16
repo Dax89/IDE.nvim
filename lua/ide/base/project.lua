@@ -1,6 +1,7 @@
 local Utils = require("ide.utils")
 local Path = require("plenary.path")
 local Runner = require("ide.base.runner")
+local Scan = require("plenary.scandir")
 local Log = require("ide.log")
 
 local Project = Utils.class(Runner)
@@ -59,11 +60,13 @@ function Project:new_job(command, args, options)
     return self:_new_job(command, args, options.src and self:get_path(true) or self:get_build_path(true), options)
 end
 
-function Project:create()
-    self:untemplate()
+function Project:create(createmodel)
+    if type(createmodel.template) == "string" then
+        self:untemplate(createmodel.template, createmodel:get_data())
+    end
 
     if self.builder then
-        self.builder:create()
+        self.builder:create(createmodel)
     end
 
     self:save()
@@ -134,8 +137,7 @@ function Project:get_var(k)
 end
 
 function Project:get_template_path()
-    local templatepath = Path:new(Utils.get_plugin_root(), "templates", self.data.type)
-    return templatepath:is_dir() and templatepath or nil
+    return Project._get_template_path(self.data.type, self.data.builder)
 end
 
 function Project:get_path(raw)
@@ -195,6 +197,34 @@ function Project._find_root_in_fs(filepath, options)
     return tostring(filepath)
 end
 
+function Project._get_template_path(type, builder)
+    local templatepath = Path:new(Utils.get_plugin_root(), "templates", type, builder)
+    return templatepath:is_dir() and templatepath or nil
+end
+
+function Project.get_templates(t, b)
+    local templates, templatepath = { }, Project._get_template_path(t, b)
+
+    if templatepath then
+        for _, p in ipairs(Scan.scan_dir(tostring(templatepath), {only_dirs = true, depth = 1})) do
+            local templatedata, templatefile = { }, Path:new(p, "template.nvide")
+
+            if templatefile:is_file() then
+                templatedata = Utils.read_json(templatefile)
+            else
+                templatedata = { }
+            end
+
+            local id = Utils.get_filename(p)
+            templatedata.path = p
+            templatedata.name = templatedata.name or id
+            templates[id] = templatedata
+        end
+    end
+
+    return templates
+end
+
 function Project.guess_project(filepath, type, options, config)
     local p = Path:new(tostring(filepath))
     Log.debug("Project.guess_project(): FilePath is '" .. tostring(filepath) .. "'")
@@ -246,33 +276,35 @@ function Project.guess_project(filepath, type, options, config)
     }, options.patterns[pattern] or { })
 end
 
-function Project:untemplate()
-    local tp = self:get_template_path()
+function Project:untemplate(template, createdata)
+    local tp = Path:new(self:get_template_path(), template)
 
     if not tp then
         Log.debug("Project.untemplate(): No templates available");
         return
     end
 
-    Log.debug("Project.untemplate(): Processing templates from ", tostring(tp))
+    Log.debug("Project.untemplate(): Processing templates from " .. tostring(tp))
 
     tp:copy({
         destination = self:get_path(),
         recursive = true
     })
 
-    local data = {
-        projectname = self.data.name
-    }
-
-    for _, p in ipairs(require("plenary.scandir").scan_dir(self:get_path(true), {add_dirs = false})) do
+    for _, p in ipairs(Scan.scan_dir(self:get_path(true), {add_dirs = false})) do
         local t = Utils.read_file(p)
 
-        for k, v in pairs(data) do
-            t = t:gsub(":" .. k .. ":", v)
+        for k, v in pairs(createdata) do
+            t = t:gsub(":" .. k .. ":", tostring(v))
         end
 
         Utils.write_file(p, t)
+    end
+
+    local templatefile = Path:new(self:get_path(), "template.nvide")
+
+    if templatefile:is_file() then
+        templatefile:rm()
     end
 end
 

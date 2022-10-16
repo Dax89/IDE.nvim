@@ -54,17 +54,44 @@ function Window:show()
             row = private[self].row,
             col = private[self].col,
             zindex = private[self].zindex,
-            width = self.width,
-            height = self.height,
+            width = math.max(self.width, 1),
+            height = math.max(self.height, 1),
         })
 
         vim.api.nvim_win_set_option(self.hwin, "sidescrolloff", 0)
         vim.api.nvim_win_set_option(self.hwin, "scrolloff", 0)
         vim.api.nvim_win_set_option(self.hwin, "wrap", false)
         vim.api.nvim_win_set_hl_ns(self.hwin, self.hns)
+    else
+        self:set_width(self.width)
+        self:set_height(self.height)
     end
 
     self:refresh()
+end
+
+function Window:get_width()
+    return self.hwin and vim.api.nvim_win_get_width(self.hwin) or self.width
+end
+
+function Window:set_width(w)
+    self.width = math.max(math.ceil(w), 1)
+
+    if self.hwin then
+        vim.api.nvim_win_set_width(self.hwin, self.width)
+    end
+end
+
+function Window:get_height()
+    return self.hwin and vim.api.nvim_win_get_height(self.hwin) or self.height
+end
+
+function Window:set_height(h)
+    self.height = math.max(math.ceil(h), 1)
+
+    if self.hwin then
+        vim.api.nvim_win_set_height(self.hwin, self.height)
+    end
 end
 
 function Window:close()

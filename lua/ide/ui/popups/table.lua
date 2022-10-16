@@ -210,6 +210,7 @@ function TablePopup:update()
                         showlabel = false,
                         showicon = false,
                         align = vim.F.if_nil(h.align, "center"),
+                        flat = true,
                     },
 
                     do_update = function(value)

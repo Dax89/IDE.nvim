@@ -32,8 +32,8 @@ function Cargo:on_ready()
     self.project:write()
 end
 
-function Cargo:create()
-    local _, code = self.project:execute("cargo", {"init", "--name", self.project:get_name(), self.project:get_path(true)}, {src = true})
+function Cargo:create(data)
+    local _, code = self.project:execute("cargo", {"init", "--" .. data.template, "--name", self.project:get_name(), self.project:get_path(true)}, {src = true})
 
     if code ~= 0 then
         Utils.notify("Cargo: Project creation failed", "error", {title = "ERROR"})

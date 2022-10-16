@@ -8,6 +8,19 @@ function Rust:get_type()
     return "rust"
 end
 
+function Rust.get_templates()
+    return {
+        bin = {
+            name = "Binary Application",
+            default = true,
+        },
+
+        lib = {
+            name = "Library",
+        }
+    }
+end
+
 function Rust:get_build_path(raw, name)
     local selcfg = self:get_selected_config()
 

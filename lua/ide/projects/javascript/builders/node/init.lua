@@ -38,7 +38,7 @@ function Node:config_to_scripts()
     self:write_package(package)
 end
 
-function Node:create()
+function Node:create(data)
     self.project:execute("npm", {"init", "-y"}, {src = true})
 
     local packagepath = Path:new(self.project:get_path(), "package.json")
@@ -48,7 +48,7 @@ function Node:create()
     end
 
     local p = Utils.read_json(packagepath)
-    p.name = self.project:get_name()
+    p.name = data.name
     Utils.write_json(packagepath, p)
 end
 

@@ -28,7 +28,7 @@ function Builder:debug(_)
     self.project:get_build_path():mkdir({parents = true, exists_ok = true})
 end
 
-function Builder:create()
+function Builder:create(data)
 end
 
 function Builder:run()

@@ -1,44 +1,116 @@
 local Utils = require("ide.utils")
 local Components = require("ide.ui.components")
 local Dialogs = require("ide.ui.dialogs")
+local Screen = require("ide.ui.utils.screen")
+local Log = require("ide.log")
 
-local CreateProjectDialog = Utils.class(Dialogs.Dialog)
+local CreateProjectDialog = Utils.class(Dialogs.TabsDialog)
 
 function CreateProjectDialog:init(ide)
     self.ide = ide
 
-    Dialogs.Dialog.init(self, "Create Project", {width = 50})
+    Dialogs.TabsDialog.init(self, {"Configuration", "Location"},"Create Project", {
+        width = Screen.get_width("60%"),
+        wizard = true,
+    })
 
     self:set_components({
-        Components.Input("Name:", nil, {key = "n", id = "name", width = "100%"}),
-        {
-            Components.Select("Type:", nil, {key = "t", id = "type", width = "50%", items = function() return self:_get_types() end}),
-            Components.Select("Builder:", nil, {key = "b", id = "builder", col = "50%", width = "50%", items = function() return self:_get_builders() end}),
+        Configuration = {
+            Components.Input("Name:", nil, {key = "n", id = "name", width = "100%"}),
+            {
+                Components.Select("Type:", nil, {key = "t", id = "type", width = "100%", items = function() return self:_get_types() end}),
+                Components.Select("Builder:", nil, {key = "b", id = "builder", col = "50%", width = "50%", items = function() return self:_get_builders() end}),
+            },
+            Components.Select("Template:", nil, {key = "T", id = "template", width = "100%", optional = true, items = function() return self:_get_templates() end}),
         },
-        Components.Picker("Folder:", nil, {key = "f", id = "folder", width = "100%", onlydirs = true}),
-        Components.Button("Create", {key = "c", col = -1, event = function() self:accept() end})
+
+        Location = {
+            Components.Picker("Create In:", nil, {key = "f", id = "folder", width = "100%", onlydirs = true}),
+            self.ide:has_integration("git") and Components.CheckBox("Initialize GIT Repo", false, {key = "r", id = "git", width = "100%"}) or nil,
+        },
     })
 end
 
-function CreateProjectDialog:on_accept(model)
-    local ok, ProjectType = pcall(require, string.format("ide.projects.%s", model.type))
+function CreateProjectDialog:_get_templates()
+    local modeldata = self:get_model().data
 
-    if not ok then
-        error(ProjectType)
-        return
+    if Utils.if_nilempty(modeldata.type) or Utils.if_nilempty(modeldata.builder) then
+        return {}
     end
 
-    local p = ProjectType(self.ide.config, model.folder, model.name, model.builder)
-    self.ide.projects[model.folder] = p
-    self.ide.active = model.folder
-    p:create()
-    self.ide:pick_file(p:get_path(true))
+    local ok, ProjectType = pcall(require, "ide.projects." .. modeldata.type)
+
+    if ok then
+        local res, templates = {}, ProjectType.get_templates(modeldata.type, modeldata.builder)
+
+        if type(templates) == "table" then
+            for k, v in pairs(templates) do
+                table.insert(res, {
+                    text = v.name,
+                    value = k
+                })
+            end
+
+            return res
+        end
+    end
+
+    return {}
 end
 
-function CreateProjectDialog:on_model_changed(model, k, _, _)
-    if k == "type" then
-        model.builder = nil
+function CreateProjectDialog:on_accept(data)
+    local ok, ProjectType = pcall(require, "ide.projects." .. data.type)
+
+    if ok then
+        local p = ProjectType(self.ide.config, data.folder, data.name, data.builder)
+        p:create(data)
+
+        local rootpath = p:get_path(true)
+        self.ide.projects[rootpath] = p
+        self.ide.active = rootpath
+
+        Log.debug("CreateProjectDialog:on_accept(): Creating project '" .. data.name .. "' in " .. rootpath)
+
+        if data.git == true then
+            Log.debug("CreateProjectDialog:on_accept(): Initializing git repo in " .. rootpath)
+            Utils.os_execute("git", {"init", rootpath})
+        end
+
+        self.ide:pick_file(rootpath)
     end
+end
+
+function CreateProjectDialog:on_model_changed(model, k)
+    if k == "type" then
+        local builders = self:_get_builders()
+        model.builder = vim.tbl_islist(builders) and not vim.tbl_isempty(builders) and builders[1] or nil
+        model.template = nil
+    end
+
+    if (k == "type" or k == "builder") and model.type then
+        local ok, ProjectType = pcall(require, "ide.projects." .. model.type)
+        model.template = ok and self:_get_default_template(ProjectType, model.type, model.builder) or nil
+    end
+end
+
+function CreateProjectDialog:_get_default_template(project, t, b)
+    local templates = project.get_templates(t, b)
+
+    if type(templates) == "table" then
+        local keys = vim.tbl_keys(templates)
+
+        if #keys == 1 then
+            return keys[1]
+        end
+
+        for n, v in pairs(templates) do
+            if v.default == true then
+                return n
+            end
+        end
+    end
+
+    return nil
 end
 
 function CreateProjectDialog:_get_features(...)
@@ -52,7 +124,8 @@ function CreateProjectDialog:_get_features(...)
 end
 
 function CreateProjectDialog:_get_builders()
-    return self.model.data.type and self:_get_features("projects", self.model.data.type, "builders") or { }
+    local modeldata = self:get_model().data
+    return modeldata.type and #modeldata.type > 0 and self:_get_features("projects", modeldata.type, "builders") or { }
 end
 
 function CreateProjectDialog:_get_types()
