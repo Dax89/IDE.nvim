@@ -3,7 +3,6 @@ return {
     root_patterns = {".git/"},
     shadow_build = false,
     debug = false,
-    build_dir = "build",
     project_file = "project.nvide",
 
     quickfix = {
