@@ -135,11 +135,12 @@ function IDE:project_check(filepath, filetype)
 
     if projcfg then
         if not self.projects[projcfg.root] then
-            local project = ProjectType(self.config, projcfg.root, projcfg.name, projcfg.builder)
+            local project = ProjectType(self.config, projcfg.root, projcfg.name, projcfg.config.builder)
             self.projects[projcfg.root] = project
             self:_update_recents(project)
 
             vim.defer_fn(function()
+                project:write()
                 project:on_ready()
             end, 1000)
         else

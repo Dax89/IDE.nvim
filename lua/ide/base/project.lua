@@ -176,11 +176,15 @@ function Project._check_pattern(path, pattern)
 end
 
 function Project._find_pattern_in_fs(filepath, options)
-    local patterns = vim.tbl_islist(options.patterns) and options.patterns or vim.tbl_keys(options.patterns)
+    if vim.is_callable(options.patterns) then
+        return options.patterns(filepath)
+    else
+        local patterns = vim.tbl_islist(options.patterns) and options.patterns or vim.tbl_keys(options.patterns)
 
-    for _, pattern in ipairs(patterns) do
-        if Project._check_pattern(filepath, pattern) then
-            return pattern
+        for _, pattern in ipairs(patterns) do
+            if Project._check_pattern(filepath, pattern) then
+                return pattern
+            end
         end
     end
 
@@ -225,7 +229,7 @@ function Project.get_templates(t, b)
     return templates
 end
 
-function Project.guess_project(filepath, type, options, config)
+function Project.guess_project(filepath, filetype, options, config)
     local p = Path:new(tostring(filepath))
     Log.debug("Project.guess_project(): FilePath is '" .. tostring(filepath) .. "'")
 
@@ -254,7 +258,7 @@ function Project.guess_project(filepath, type, options, config)
         return nil
     end
 
-    Log.debug("Project.guess_project(): RootPath is '" .. tostring(p) .. "', selected pattern: '" .. pattern .. "'")
+    Log.debug("Project.guess_project(): RootPath is '" .. tostring(p) .. "', selected pattern: '" .. vim.inspect(pattern) .. "'")
 
     local name = vim.fn.fnamemodify(p, ":t")
     local projfile = Path:new(p, config.project_file)
@@ -262,7 +266,7 @@ function Project.guess_project(filepath, type, options, config)
     if projfile:is_file() then
         local nvide = Utils.read_json(projfile)
 
-        if nvide.type ~= type then
+        if nvide.type ~= filetype then
             return nil
         end
 
@@ -270,10 +274,19 @@ function Project.guess_project(filepath, type, options, config)
         name = nvide.name
     end
 
-    return vim.tbl_extend("force", {
+    local cfg = { }
+
+    if vim.is_callable(options.patterns) then
+        cfg = type(pattern) == "table" and pattern or { }
+    elseif type(options.patterns) == "table" then
+        cfg = options.patterns[pattern] or { }
+    end
+
+    return {
         name = name,
-        root = p
-    }, options.patterns[pattern] or { })
+        root = p,
+        config = cfg,
+    }
 end
 
 function Project:untemplate(template, createdata)
