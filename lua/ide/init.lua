@@ -101,8 +101,12 @@ function IDE:_check_projectfile(filepath)
         if fp:is_file() then
             Log.debug("IDE._check_projectfile(): '" .. self.config.project_file .. "' found in '" .. p .. "'")
             local projcfg = Utils.read_json(fp)
-            projcfg.root = p
-            return projcfg
+
+            return {
+                name = projcfg.name,
+                root = p,
+                config = projcfg,
+            }
         end
     end
 
@@ -140,8 +144,8 @@ function IDE:project_check(filepath, filetype)
             self:_update_recents(project)
 
             vim.defer_fn(function()
-                project:write()
                 project:on_ready()
+                project:write()
             end, 1000)
         else
             Log.debug("IDE.project_check(): Project: '" .. self.project[projcfg.root] .. "' already loaded, skipping...")
