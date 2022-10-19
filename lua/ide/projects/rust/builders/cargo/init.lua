@@ -77,7 +77,7 @@ end
 
 function Cargo:run()
     self:check_settings(function(_, config)
-        self:check_and_run(Path:new(self.project:get_build_path(true), config.target), config.cmdline, config)
+        self:check_and_run(Path:new(self.project:get_build_path(), config.target), config.cmdline, config)
     end)
 end
 
@@ -86,7 +86,7 @@ function Cargo:debug(options)
         self.project:run_dap({
             request = "launch",
             type = "codelldb",
-            program = tostring(Path:new(self.project:get_build_path(true), config.target)),
+            program = tostring(Path:new(self.project:get_build_path(), config.target)),
             args = config.cmdline,
         }, options or { })
     end)
@@ -99,7 +99,7 @@ function Cargo:settings()
         dlg(self, {
             {
                 name = "mode", label = "Mode", type = Cells.SelectCell,
-                items = function() return self:get_modes() end
+                items = function() return Cargo.BUILD_MODES end
             },
             {
                 name = "target", label = "Target", type = Cells.SelectCell,
