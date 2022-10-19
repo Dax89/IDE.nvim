@@ -59,13 +59,13 @@ function Builder:do_run(filepath, args, config, options)
     self.project:new_job(filepath, args, vim.tbl_extend("force", options or { }, {title = "Run - " .. config.name or Utils.get_filename(filepath), state = "run"}))
 end
 
-function Builder:check_and_run(filepath, args, config)
+function Builder:check_and_run(filepath, args, config, options)
     local p = Path:new(filepath)
 
     if not p:is_file() then
         self:build(nil, function(_, code)
             if code == 0 then
-                self:do_run(p, args, config)
+                self:do_run(p, args, config, options)
             end
         end)
     else
