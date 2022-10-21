@@ -86,7 +86,13 @@ function IDE:_check_loaded(filepath)
                 vim.api.nvim_set_current_dir(p)
             end
 
-            Log.debug("IDE._check_loaded(): Project '" .. self.projects[p]:get_name() .. "' already loaded, skipping...")
+            if self.active ~= p then
+                self.active = p
+                Log.debug("IDE._check_loaded(): Project '" .. self.projects[p]:get_name() .. "' selected")
+            else
+                Log.debug("IDE._check_loaded(): Project '" .. self.projects[p]:get_name() .. "' already loaded, skipping...")
+            end
+
             return true
         end
     end
@@ -156,6 +162,9 @@ function IDE:project_check(filepath, filetype)
         if vim.fn.getcwd() ~= projcfg.root then
             vim.api.nvim_set_current_dir(projcfg.root)
         end
+    else
+        Log.debug("IDE.project_check(): File '" .. Utils.get_filename(p) .. "' doesn't belong to any project")
+        self.active = nil
     end
 end
 
