@@ -233,21 +233,29 @@ function Project.guess_project(filepath, filetype, options, config)
     local p = Path:new(tostring(filepath))
     Log.debug("Project.guess_project(): FilePath is '" .. tostring(filepath) .. "'")
 
-    -- Check if is a GIT Submodule
-    Log.debug("Project.guess_project(): Searching root in GIT submodules")
-    local gitroot, ret = Utils.os_execute("git", {"rev-parse", "--show-superproject-working-tree"}, tostring(p))
+    local gitfound = false
 
-    -- Check if is a GIT Repo
-    if ret == 0 and vim.tbl_isempty(gitroot) then
-        Log.debug("Project.guess_project(): Searching root dir in GIT repo")
-        gitroot, ret = Utils.os_execute("git", {"rev-parse", "--show-toplevel"}, tostring(p))
+    if config.integrations.git and config.integrations.git.enable == true then
+        -- Check if is a GIT Submodule
+        Log.debug("Project.guess_project(): Searching root in GIT submodules")
+        local gitroot, ret = Utils.os_execute("git", {"rev-parse", "--show-superproject-working-tree"}, tostring(p))
+
+        -- Check if is a GIT Repo
+        if ret == 0 and vim.tbl_isempty(gitroot) then
+            Log.debug("Project.guess_project(): Searching root dir in GIT repo")
+            gitroot, ret = Utils.os_execute("git", {"rev-parse", "--show-toplevel"}, tostring(p))
+        end
+
+        gitfound = ret == 0 and not vim.tbl_isempty(gitroot)
+
+        if gitfound then
+            p = gitroot[1]
+        end
     end
 
-    if ret ~= 0 or vim.tbl_isempty(gitroot) then
+    if not gitfound then
         Log.debug("Project.guess_project(): Searching root in FS")
         p = Project._find_root_in_fs(filepath, options)
-    else
-        p = gitroot[1]
     end
 
     assert(p, "Invalid project root")
@@ -441,3 +449,4 @@ function Project:on_ready()
 end
 
 return Project
+
