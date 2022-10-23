@@ -2,10 +2,15 @@ local Utils = require("ide.utils")
 local Cells = require("ide.ui.components.cells")
 local Popups = require("ide.ui.popups")
 
+local private = Utils.private_stash()
 local ConfigDialog = Utils.class(Popups.TablePopup)
 
 function ConfigDialog:init(builder, header, options)
     options = options or { }
+
+    private[self] = {
+        showcommand = options.showcommand == true
+    }
 
     self.builder = builder
     self.project = builder.project
@@ -24,6 +29,16 @@ function ConfigDialog:init(builder, header, options)
         {name = "selected", label = "Selected", type = Cells.CheckCell},
         {name = "name", label = "Name", type = Cells.InputCell},
     }, header or { })
+
+    if private[self].showcommand then
+        fullheader = vim.list_extend(fullheader, {
+            {name = "command", label = "Command", type = Cells.InputCell},
+        })
+    end
+
+    fullheader = vim.list_extend(fullheader, {
+        {name = "cwd", label = "Working Dir", type = Cells.PickerCell, options = {onlydirs = true}},
+    })
 
     Popups.TablePopup.init(self, fullheader, data,
     vim.F.if_nil(options.title, self.project:get_name() .. " - Configuration"),

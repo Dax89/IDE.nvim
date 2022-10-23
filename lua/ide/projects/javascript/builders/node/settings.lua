@@ -56,11 +56,8 @@ function NodeSettings:init(builder)
                 background = "secondary",
 
                 event = function()
-                    ConfigDialog(self.builder, {
-                        {label = "Command", name = "command", type = Cells.InputCell},
-                    }):popup()
+                    ConfigDialog(self.builder, nil, {showcommand = true}):popup()
                 end,
-
 
                 data = function()
                     local data = { }

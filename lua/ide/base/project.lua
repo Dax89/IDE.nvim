@@ -47,6 +47,9 @@ function Project:init(config, path, name, builder)
         end
 
         self.builder = BuilderType(self)
+    else
+        Log.debug("Project: Loading '" .. self:get_name() .. "', type: '" .. self:get_type() .. "', builder: 'nvide'")
+        self.builder = require("ide.base.builder")(self)
     end
 end
 
@@ -57,7 +60,9 @@ end
 
 function Project:new_job(command, args, options)
     options = options or { }
-    return self:_new_job(command, args, options.src and self:get_path(true) or self:get_build_path(true), options)
+
+    local cwd = vim.F.if_nil(options.cwd, options.src and self:get_path(true) or self:get_build_path(true))
+    return self:_new_job(command, args, cwd, options)
 end
 
 function Project:create(createmodel)

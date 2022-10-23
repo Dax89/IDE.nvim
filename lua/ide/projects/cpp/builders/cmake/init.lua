@@ -152,7 +152,6 @@ function CMake:settings()
                 items = function() return self:get_targets() end
             },
             {name = "cmdline", label = "Command Line", type = Cells.InputCell},
-            {name = "cwd", label = "Working Dir", type = Cells.PickerCell},
         }):popup(function()
             self:configure()
         end)

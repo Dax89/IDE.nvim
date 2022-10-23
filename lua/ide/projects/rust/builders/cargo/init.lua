@@ -106,7 +106,6 @@ function Cargo:settings()
                 items = function() return self:get_targets() end
             },
             {name = "cmdline", label = "Command Line", type = Cells.InputCell},
-            {name = "cwd", label = "Working Dir", type = Cells.PickerCell},
         }):popup()
     end
 end

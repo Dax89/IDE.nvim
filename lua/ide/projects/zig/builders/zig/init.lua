@@ -73,7 +73,6 @@ function Zig:settings()
                 items = function() return Zig.BUILD_MODES end
             },
             {name = "cmdline", label = "Command Line", type = Cells.InputCell},
-            {name = "cwd", label = "Working Dir", type = Cells.PickerCell},
         }):popup()
     end
 end

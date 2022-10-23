@@ -8,7 +8,7 @@ function Builder:init(project)
 end
 
 function Builder:get_type()
-    error("Builder:get_type() is abstract")
+    return "nvide"
 end
 
 function Builder:rebuild()
@@ -32,13 +32,22 @@ function Builder:create(data)
 end
 
 function Builder:run()
+    local selcfg = self.project:get_selected_config()
+
+    if selcfg then
+        self:do_run_cmd(selcfg.command, selcfg, {cwd = vim.F.if_nil(selcfg.cwd, self.project:get_path(true))})
+    end
 end
 
 function Builder:settings()
     local dlg = self:get_settings_dialog()
 
     if dlg then
-        dlg(self):popup()
+        if not self.project.data.builder then
+            dlg(self, nil, {showcommand = true}):popup()
+        else
+            dlg(self):popup()
+        end
     end
 end
 

@@ -21,7 +21,7 @@ local function select_item(path, onchoice, options, level)
         table.insert(items, 1, "..")
     end
 
-    if options.only_dirs then
+    if options.onlydirs then
         table.insert(items, 1, "<SELECT FOLDER>")
     end
 
@@ -44,7 +44,7 @@ local function select_item(path, onchoice, options, level)
                 end
             elseif type(choice) == "table" and choice:is_dir() then
                 select_item(Path:new(choice), onchoice, options, level + 1)
-            elseif not options.only_dirs and (type(choice) == "table" and choice:is_file()) then
+            elseif not options.onlydirs and (type(choice) == "table" and choice:is_file()) then
                 onchoice(choice)
             end
         end
@@ -55,7 +55,7 @@ local PickerDialog = { }
 
 function PickerDialog.select_folder(onchoice, options)
     options = options or { }
-    select_item(Path:new(options.cwd or vim.loop.os_homedir()), onchoice, vim.tbl_extend("force", options, {only_dirs = true}))
+    select_item(Path:new(options.cwd or vim.loop.os_homedir()), onchoice, vim.tbl_extend("force", options, {onlydirs = true}))
 end
 
 function PickerDialog.select_file(onchoice, options)

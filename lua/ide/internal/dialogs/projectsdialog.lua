@@ -16,6 +16,7 @@ function ProjectsDialog:init(ide, options)
 
     local data = vim.tbl_map(function(r)
         local d = Utils.read_json(Path:new(r.root, ide.config.project_file))
+        d.builder = vim.F.if_nil(d.builder, "nvide")
         d.root = r.root
         return d
     end, Utils.list_reverse(recents))
