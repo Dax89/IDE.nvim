@@ -105,11 +105,23 @@ function Project:check_config(name, config)
     return self.data.config[name]
 end
 
-function Project:set_config(name, config)
+function Project:reset_config()
+    self.data.config = { }
+    self.data.selconfig = nil
+end
+
+function Project:set_config(name, config, reset)
     vim.validate({
         name = {name, "string"},
         config = {config, {"table", "nil"}},
     })
+
+    if reset == true then
+        self.data.config = { }
+        self.data.selconfig = nil
+        self.data.config = { }
+        self.data.selconfig = nil
+    end
 
     config.name = name
     self.data.config[name] = config

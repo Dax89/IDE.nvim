@@ -54,6 +54,8 @@ function ConfigDialog:init(builder, header, options)
         end,
 
         changed = function(_, v)
+            self.project:reset_config()
+
             for _, cfg in ipairs(v) do
                 self.project:set_config(cfg.name, cfg)
 
