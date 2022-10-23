@@ -9,7 +9,7 @@ local Project = Utils.class(Runner)
 function Project:init(config, path, name, builder)
     Runner.init(self, config)
 
-    if vim.fn.fnamemodify(tostring(path), ":t") ~= name then
+    if Utils.get_filename(path) ~= name then
         path = Path:new(path, name)
         path:mkdir()
     end
@@ -122,12 +122,6 @@ function Project:is_virtual()
     return self:get_type() == nil
 end
 
-function Project.check(filepath, config)
-    return Project.guess_project(filepath, nil, {
-        patterns = vim.list_extend({config.project_file}, config.root_patterns)
-    }, config)
-end
-
 function Project:set_var(k, v)
     self.data.vars[k] = v
 end
@@ -168,37 +162,8 @@ function Project:get_build_path(raw, name)
     return raw and tostring(p) or p
 end
 
-function Project._check_pattern(path, pattern)
-    local isdir = vim.endswith(pattern, "/")
-    local n = isdir and pattern:gsub(0, -2) or pattern
-    local p = Path:new(path, n)
-    return isdir and p:is_dir() or p:is_file()
-end
-
-function Project._find_pattern_in_fs(filepath, options)
-    if vim.is_callable(options.patterns) then
-        return options.patterns(filepath)
-    else
-        local patterns = vim.tbl_islist(options.patterns) and options.patterns or vim.tbl_keys(options.patterns)
-
-        for _, pattern in ipairs(patterns) do
-            if Project._check_pattern(filepath, pattern) then
-                return pattern
-            end
-        end
-    end
-
+function Project.get_root_pattern()
     return nil
-end
-
-function Project._find_root_in_fs(filepath, options)
-    for _, cp in ipairs(filepath:parents()) do
-        if Project._find_pattern_in_fs(cp, options) then
-            return tostring(cp)
-        end
-    end
-
-    return tostring(filepath)
 end
 
 function Project._get_template_path(type, builder)
@@ -227,74 +192,6 @@ function Project.get_templates(t, b)
     end
 
     return templates
-end
-
-function Project.guess_project(filepath, filetype, options, config)
-    local p = Path:new(tostring(filepath))
-    Log.debug("Project.guess_project(): FilePath is '" .. tostring(filepath) .. "'")
-
-    local gitfound = false
-
-    if config.integrations.git and config.integrations.git.enable == true then
-        -- Check if is a GIT Submodule
-        Log.debug("Project.guess_project(): Searching root in GIT submodules")
-        local gitroot, ret = Utils.os_execute("git", {"rev-parse", "--show-superproject-working-tree"}, tostring(p))
-
-        -- Check if is a GIT Repo
-        if ret == 0 and vim.tbl_isempty(gitroot) then
-            Log.debug("Project.guess_project(): Searching root dir in GIT repo")
-            gitroot, ret = Utils.os_execute("git", {"rev-parse", "--show-toplevel"}, tostring(p))
-        end
-
-        gitfound = ret == 0 and not vim.tbl_isempty(gitroot)
-
-        if gitfound then
-            p = gitroot[1]
-        end
-    end
-
-    if not gitfound then
-        Log.debug("Project.guess_project(): Searching root in FS")
-        p = Project._find_root_in_fs(filepath, options)
-    end
-
-    assert(p, "Invalid project root")
-    local pattern = Project._find_pattern_in_fs(p, options)
-
-    if not pattern then
-        Log.warn("Project.guess_project(): Pattern NOT FOUND in " .. tostring(p))
-        return nil
-    end
-
-    Log.debug("Project.guess_project(): RootPath is '" .. tostring(p) .. "', selected pattern: '" .. vim.inspect(pattern) .. "'")
-
-    local name = vim.fn.fnamemodify(p, ":t")
-    local projfile = Path:new(p, config.project_file)
-
-    if projfile:is_file() then
-        local nvide = Utils.read_json(projfile)
-
-        if nvide.type ~= filetype then
-            return nil
-        end
-
-        Log.debug("Project.guess_project(): '" .. config.project_file .. "' loaded, name is '" .. nvide.name .. "'")
-        name = nvide.name
-    end
-
-    local cfg = { }
-
-    if vim.is_callable(options.patterns) then
-        cfg = type(pattern) == "table" and pattern or { }
-    elseif type(options.patterns) == "table" then
-        cfg = options.patterns[pattern] or { }
-    end
-
-    return {
-        name = name,
-        root = p,
-        config = cfg,
-    }
 end
 
 function Project:untemplate(template, createdata)

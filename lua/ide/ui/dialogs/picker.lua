@@ -1,5 +1,6 @@
 local Path = require("plenary.path")
 local Scan = require("plenary.scandir")
+local Utils = require("ide.utils")
 
 local function select_item(path, onchoice, options, level)
     level = level or 0
@@ -28,7 +29,7 @@ local function select_item(path, onchoice, options, level)
         prompt = path.filename,
         format_item = function(item)
             if type(item) ~= "string" then
-                return (item:is_dir() and " " or " ") .. vim.fn.fnamemodify(item.filename, ":t")
+                return (item:is_dir() and " " or " ") .. Utils.get_filename(item.filename)
             end
             return item
         end

@@ -1,3 +1,4 @@
+local Rooter = require("ide.internal.rooter")
 local Utils = require("ide.utils")
 local Path = require("plenary.path")
 local Log = require("ide.log")
@@ -9,6 +10,7 @@ function IDE:init(config)
     self.config = config or { }
     self.active = nil
     self.projects = { }
+    self.rooter = Rooter(self)
 
     self._storage:mkdir({parents = true, exists_ok = true})
     require("ide.integrations.dap").setup(config)
@@ -140,7 +142,7 @@ function IDE:project_check(filepath, filetype)
     end
 
     if not projcfg then
-        projcfg = ProjectType.check(p:is_file() and p:parent() or p, self.config)
+        projcfg = self.rooter:find_rootpath(p:is_file() and p:parent() or p, filetype, ProjectType)
     end
 
     if projcfg then

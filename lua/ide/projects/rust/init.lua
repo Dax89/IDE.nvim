@@ -32,12 +32,10 @@ function Rust:get_build_path(raw, name)
     return raw and tostring(p) or p
 end
 
-function Rust.check(filepath, config)
-    return Rust.guess_project(filepath, "rust", {
-        patterns = {
-            ["Cargo.toml"] = {builder = "cargo"}
-        }
-    }, config)
+function Rust.get_root_pattern()
+    return {
+        ["Cargo.toml"] = {builder = "cargo"}
+    }
 end
 
 return Rust

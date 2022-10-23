@@ -7,12 +7,10 @@ function Javascript:get_type()
     return "javascript"
 end
 
-function Javascript.check(filepath, config)
-    return Javascript.guess_project(filepath, "javascript", {
-        patterns = {
-            ["package.json"] = {builder = "node"}
-        }
-    }, config)
+function Javascript.get_root_pattern()
+    return {
+        ["package.json"] = {builder = "node"}
+    }
 end
 
 return Javascript

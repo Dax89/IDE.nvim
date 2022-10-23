@@ -32,12 +32,10 @@ function Zig:get_build_path(raw, name)
     return raw and tostring(p) or p
 end
 
-function Zig.check(filepath, config)
-    return Zig.guess_project(filepath, "zig", {
-        patterns = {
-            ["build.zig"] = {builder = "zig"}
-        }
-    }, config)
+function Zig.get_root_pattern()
+    return {
+        ["build.zig"] = {builder = "zig"}
+    }
 end
 
 return Zig

@@ -7,13 +7,11 @@ function Cpp:get_type()
     return "cpp"
 end
 
-function Cpp.check(filepath, config)
-    return Cpp.guess_project(filepath, "cpp",  {
-        patterns = {
-            ["CMakeLists.txt"] = { builder = "cmake"}
-            -- ["Makefile"] = { builder = "make "},
-        }
-    }, config)
+function Cpp.get_root_pattern()
+    return {
+        ["CMakeLists.txt"] = {builder = "cmake"}
+        -- ["Makefile"] = { builder = "make "},
+    }
 end
 
 return Cpp
