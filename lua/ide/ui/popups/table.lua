@@ -231,6 +231,10 @@ function TablePopup:update()
                     end
                 }
 
+                if type(h.options) == "table" then
+                    celldata.options = vim.tbl_extend("keep", celldata.options, h.options)
+                end
+
                 if type(h.type) == "table" and h.type:instanceof(Cells.Cell) then
                     c = h.type(celldata):create()
                 elseif vim.is_callable(h.type) then
