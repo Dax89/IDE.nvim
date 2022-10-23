@@ -131,7 +131,7 @@ function TablePopup:on_remove()
 
         if canremove then
             table.remove(private[self].data, private[self].rowindex + 1)
-            self:_update_index(self.index, true) -- Recalculate index, if needed
+            self:_update_index(private[self].rowindex, private[self].colindex, true) -- Recalculate index, if needed
         end
     end
 end
