@@ -274,7 +274,7 @@ function TablePopup:update()
                 key = "z",
                 col = 1,
 
-                event = function()
+                click = function()
                     vim.ui.select(private[self].actions, {
                         prompt = "Actions"
                     }, function(choice, idx)
@@ -290,7 +290,7 @@ function TablePopup:update()
             table.insert(buttons, Components.Button(private[self].accepttext, {
                 key = "A",
                 col = -2,
-                event = function() self:_do_accept() end
+                click = function() self:_do_accept() end
             }))
         end
 

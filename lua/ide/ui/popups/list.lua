@@ -53,7 +53,7 @@ function ListPopup:_update_items()
     table.insert(t, Components.Button("Accept", {
         key = "A",
         col = -2,
-        event = function() self:accept() end
+        click = function() self:accept() end
     }))
 
     self:set_components(t)

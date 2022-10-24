@@ -66,7 +66,7 @@ function TabsDialog:update()
                 background = i - 1 == private[self].page and "selected" or nil,
                 align = "center",
 
-                event = function()
+                click = function()
                     if not private[self].wizard then
                         self:set_page(i - 1)
                     end
@@ -112,7 +112,7 @@ function TabsDialog:update()
                     col = -2,
                     background = lastpage and "accent" or nil,
 
-                    event = function()
+                    click = function()
                         if lastpage then
                             self:on_finish()
                         else
@@ -125,7 +125,7 @@ function TabsDialog:update()
             if private[self].page > 0 then
                 table.insert(footer, 1, Components.Button(private[self].prevlabel, {
                     col = 1,
-                    event = function()
+                    click = function()
                         self:prev()
                     end
                 }))
@@ -134,7 +134,7 @@ function TabsDialog:update()
             footer = {
                 Components.Button("Accept", {
                     col = -2,
-                    event = function()
+                    click = function()
                         self:accept()
                     end
                 })

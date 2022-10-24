@@ -27,15 +27,15 @@ function Button:init(text, options)
     end
 
     private[self] = {
-        event = options.event
+        click = options.click
     }
 
     Label.init(self, " " .. text .. " ", options)
 end
 
 function Button:on_event(e)
-    if vim.is_callable(private[self].event) then
-        private[self].event({sender = self, event = e})
+    if vim.is_callable(private[self].click) then
+        private[self].click({sender = self, event = e})
     end
 end
 

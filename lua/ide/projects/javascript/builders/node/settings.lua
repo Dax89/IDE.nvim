@@ -55,7 +55,7 @@ function NodeSettings:init(builder)
                 col = 34,
                 background = "secondary",
 
-                event = function()
+                click = function()
                     ConfigDialog(self.builder, nil, {showcommand = true}):popup()
                 end,
 
@@ -71,7 +71,7 @@ function NodeSettings:init(builder)
                 changed = function() self.builder:config_to_scripts() end
             }),
 
-            Components.Button("Save", {col = -1, event = function() self:accept() end}),
+            Components.Button("Save", {col = -1, click = function() self:accept() end}),
         }
     })
 end
