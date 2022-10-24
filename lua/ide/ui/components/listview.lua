@@ -18,9 +18,9 @@ function ListView:init(text, options)
         },
 
         selected = options.selected,
-        changed = options.changed,
-        removed = options.removed,
-        added = options.added,
+        change = options.change,
+        remove = options.remove,
+        add = options.add,
     }
 
     Button.init(self, text, options)
@@ -36,21 +36,21 @@ function ListView:on_event(_)
     end
 
     local ppoptions = vim.tbl_extend("force", private[self].popupoptions, {
-        added = function(_, d, pos)
-            if vim.is_callable(private[self].added) then
-                private[self].added(self, d, pos)
+        add = function(_, d, pos)
+            if vim.is_callable(private[self].add) then
+                private[self].add(self, d, pos)
             end
         end,
 
-        removed = function(_, d, idx)
-            if vim.is_callable(private[self].removed) then
-                private[self].removed(self, d, idx)
+        remove = function(_, d, idx)
+            if vim.is_callable(private[self].remove) then
+                private[self].remove(self, d, idx)
             end
         end,
 
-        changed = function(_, d)
-            if vim.is_callable(private[self].changed) then
-                private[self].changed(self, d)
+        change = function(_, d)
+            if vim.is_callable(private[self].change) then
+                private[self].change(self, d)
             end
         end,
 

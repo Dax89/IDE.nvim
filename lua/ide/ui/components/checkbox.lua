@@ -14,7 +14,7 @@ function CheckBox:init(label, checked, options)
         showlabel = vim.F.if_nil(options.showlabel, true),
         flat = vim.F.if_nil(options.flat, false),
         checked = checked == true,
-        changed = options.changed,
+        change = options.change,
     }
 
     Base.Component.init(self, options)
@@ -26,8 +26,8 @@ function CheckBox:set_value(v)
     if value ~= oldvalue then
         private[self].checked = value
 
-        if vim.is_callable(private[self].changed) then
-            private[self].changed(self, value, oldvalue)
+        if vim.is_callable(private[self].change) then
+            private[self].change(self, value, oldvalue)
         end
     end
 end

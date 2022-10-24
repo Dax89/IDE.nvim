@@ -43,17 +43,23 @@ function ConfigDialog:init(builder, header, options)
     Popups.TablePopup.init(self, fullheader, data,
     vim.F.if_nil(options.title, self.project:get_name() .. " - Configuration"),
     vim.tbl_extend("force", options, {
-        cellchanged = function(_, arg)
+        cellchange = function(_, arg)
             if arg.header.name == "selected" then
                 for i, r in ipairs(arg.data) do
                     if i ~= arg.index then
                         r.selected = false
                     end
                 end
+            elseif arg.header.name == "name" then
+                arg.value = self:_get_unique_name(arg.value, arg.data, arg.index)
             end
         end,
 
-        changed = function(_, v)
+        add = function(_, arg)
+            arg.row.name = self:_get_unique_name("newconfig", arg.data, arg.index)
+        end,
+
+        change = function(_, v)
             self.project:reset_config()
 
             for _, cfg in ipairs(v) do
@@ -64,11 +70,33 @@ function ConfigDialog:init(builder, header, options)
                 end
             end
 
-            if vim.is_callable(options.changed) then
-                options.changed(self, v) -- Forward event
+            if vim.is_callable(options.change) then
+                options.change(self, v) -- Forward event
             end
         end
     }))
+end
+
+function ConfigDialog:_get_unique_name(name, data, skipidx)
+    local n, c, names = name, 0, vim.tbl_map(function(r)
+        return r.name or ""
+    end, data)
+
+    table.remove(names, skipidx) -- Remove current row
+
+    while vim.tbl_contains(names, n) do
+        c = c + 1
+        n = name .. "_" .. tostring(c)
+    end
+
+    c = 0
+
+    while self.project:get_config(n) do
+        n = name .. "_" .. tostring(c)
+        c = c + 1
+    end
+
+    return n
 end
 
 function ConfigDialog:on_accept()

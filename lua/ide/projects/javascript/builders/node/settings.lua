@@ -35,7 +35,7 @@ function NodeSettings:init(builder)
                 items = function()
                     return vim.tbl_keys(package.dependencies or { })
                 end,
-                changed = function(_, data) self:install_dependencies(data) end
+                change = function(_, data) self:install_dependencies(data) end
             }),
 
             Components.ListView("Dev Dependencies", {
@@ -47,7 +47,7 @@ function NodeSettings:init(builder)
                 items = function()
                     return vim.tbl_keys(package.devDependencies or { })
                 end,
-                changed = function(_, data) self:install_dependencies(data, true) end,
+                change = function(_, data) self:install_dependencies(data, true) end,
             }),
 
             Components.Button("Configuration", {
@@ -68,7 +68,7 @@ function NodeSettings:init(builder)
 
                     return data
                 end,
-                changed = function() self.builder:config_to_scripts() end
+                change = function() self.builder:config_to_scripts() end
             }),
 
             Components.Button("Save", {col = -1, click = function() self:accept() end}),

@@ -11,9 +11,9 @@ function ListPopup:init(items, title, options)
     private[self] = {
         formatitem = options.formatitem,
         selected = options.selected,
-        changed = options.changed,
-        removed = options.removed,
-        added = options.added,
+        change = options.change,
+        remove = options.remove,
+        add = options.add,
         items = vim.F.if_nil(items, { }),
         unique = vim.F.if_nil(options.unique, false),
         editable = vim.F.if_nil(options.editable, true),
@@ -126,8 +126,8 @@ function ListPopup:on_add()
 
             local newitem = choice
 
-            if vim.is_callable(private[self].added) then
-                newitem = private[self].added(self, newitem, self.index) or choice
+            if vim.is_callable(private[self].add) then
+                newitem = private[self].add(self, newitem, self.index) or choice
             end
 
             table.insert(private[self].items, 1, newitem)
@@ -144,8 +144,8 @@ function ListPopup:on_remove()
     if not vim.tbl_isempty(private[self].items) then
         local canremove = true
 
-        if vim.is_callable(private[self].removed) then
-            canremove = private[self].removed(self, self:get_current_item(), self.index) ~= false
+        if vim.is_callable(private[self].remove) then
+            canremove = private[self].remove(self, self:get_current_item(), self.index) ~= false
         end
 
         if canremove then
@@ -170,8 +170,8 @@ function ListPopup:on_edit()
 
             local newitem = choice
 
-            if vim.is_callable(private[self].added) then
-                newitem = private[self].added(self, newitem, self.index) or choice
+            if vim.is_callable(private[self].add) then
+                newitem = private[self].add(self, newitem, self.index) or choice
             end
 
             private[self].items[self.index + 1] = newitem
@@ -181,8 +181,8 @@ function ListPopup:on_edit()
 end
 
 function ListPopup:on_accept()
-    if vim.is_callable(private[self].changed) then
-        private[self].changed(self, private[self].items)
+    if vim.is_callable(private[self].change) then
+        private[self].change(self, private[self].items)
     end
 end
 

@@ -5,7 +5,7 @@ local SelectCell = Utils.class(Cell)
 
 function SelectCell:create()
     self.options.items = self.header.items
-    self.options.changed = function(_, v) self:update(v) end
+    self.options.change = function(_, v) self:update(v) end
     local Select = require("ide.ui.components.select")
     return Select(self.label, vim.F.if_nil(self.value, ""), self.options)
 end

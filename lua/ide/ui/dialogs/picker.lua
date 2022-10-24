@@ -15,7 +15,7 @@ local function select_item(path, onchoice, options, level)
 
     local items = vim.tbl_map(function(item)
         return Path:new(item)
-    end, Scan.scan_dir(tostring(path), vim.tbl_extend("force", options, {depth = 1})))
+    end, Scan.scan_dir(tostring(path), vim.tbl_extend("force", vim.tbl_extend("force", options, {only_dirs = options.onlydirs}), {depth = 1})))
 
     if not is_root(path) then
         table.insert(items, 1, "..")

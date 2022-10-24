@@ -19,7 +19,7 @@ function Dialog:init(title, options)
         components = { },
 
         model = Model({
-            changed = function(model, k, newvalue, oldvalue)
+            change = function(model, k, newvalue, oldvalue)
                 self:on_model_changed(model, k, newvalue, oldvalue)
                 self:render()
             end

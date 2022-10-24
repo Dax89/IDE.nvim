@@ -238,7 +238,7 @@ local function setup(config)
         local ProjectsDialog = require("ide.internal.dialogs.projectsdialog")
 
         local dlgprojects = ProjectsDialog(ide, {
-            changed = function(t)
+            change = function(t)
                 ide:pick_file(t:get_current_row().root)
             end
         })

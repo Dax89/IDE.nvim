@@ -23,11 +23,11 @@ function TablePopup:init(header, data, title, options)
         actiontext = vim.F.if_nil(options.actiontext, "Actions"),
         actionselected = options.actionselected,
         actions = options.actions,
-        cellchanged = options.cellchanged,
+        cellchange = options.cellchange,
         selected = options.selected,
-        changed = options.changed,
-        removed = options.removed,
-        added = options.added,
+        change = options.change,
+        remove = options.remove,
+        add = options.add,
         rowindex = -1,
         colindex = -1,
     }
@@ -85,14 +85,18 @@ function TablePopup:on_add()
 
     local newrow = { }
 
-    if vim.is_callable(private[self].added) then
-        newrow = private[self].added(self, newrow, {
-            row = private[self].rowindex,
-            col = private[self].colindex
-        }) or { }
+    if vim.is_callable(private[self].add) then
+        local arg = {
+            index = private[self].rowindex,
+            data = private[self].data,
+            row = { },
+        }
+
+        private[self].add(self, arg)
+        newrow = arg.row
     end
 
-    assert(vim.tbl_islist(newrow))
+    assert(type(newrow) == "table")
     table.insert(private[self].data, 1, newrow)
     self:update()
 end
@@ -112,8 +116,8 @@ function TablePopup:_do_accept()
 end
 
 function TablePopup:on_accept()
-    if vim.is_callable(private[self].changed) then
-        private[self].changed(self, private[self].data)
+    if vim.is_callable(private[self].change) then
+        private[self].change(self, private[self].data)
     end
 end
 
@@ -125,8 +129,14 @@ function TablePopup:on_remove()
     if not vim.tbl_isempty(private[self].data) then
         local canremove = true
 
-        if vim.is_callable(private[self].removed) then
-            canremove = private[self].removed(self, self:get_current_item(), self.index) ~= false
+        if vim.is_callable(private[self].remove) then
+            local arg = {
+                row = self:get_current_row(),
+                index = private[self].rowindex,
+                data = private[self].data,
+            }
+
+            canremove = private[self].remove(self, arg) ~= false
         end
 
         if canremove then
@@ -215,15 +225,19 @@ function TablePopup:update()
 
                     do_update = function(value)
                         if private[self].editable then
-                            rowdata[h.name] = value
-
-                            if vim.is_callable(private[self].cellchanged) then
-                                private[self].cellchanged(self, {
+                            if vim.is_callable(private[self].cellchange) then
+                                local arg = {
                                     header = h,
                                     rowdata = rowdata,
                                     data = private[self].data,
                                     index = rowidx,
-                                })
+                                    value = value,
+                                }
+
+                                private[self].cellchange(self, arg)
+                                rowdata[h.name] = arg.value
+                            else
+                                rowdata[h.name] = value
                             end
 
                             self:update()
