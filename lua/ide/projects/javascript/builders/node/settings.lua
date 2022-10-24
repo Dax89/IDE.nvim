@@ -33,7 +33,7 @@ function NodeSettings:init(builder)
                 view = {width = 40},
                 unique = true,
                 items = function()
-                    return vim.tbl_keys(package.dependencies or { })
+                    return vim.tbl_keys(self.builder:read_package().dependencies or { })
                 end,
                 change = function(_, data) self:install_dependencies(data) end
             }),
@@ -45,7 +45,7 @@ function NodeSettings:init(builder)
                 view = {width = 40},
                 unique = true,
                 items = function()
-                    return vim.tbl_keys(package.devDependencies or { })
+                    return vim.tbl_keys(self.builder:read_package().devDependencies or { })
                 end,
                 change = function(_, data) self:install_dependencies(data, true) end,
             }),
@@ -62,7 +62,7 @@ function NodeSettings:init(builder)
                 data = function()
                     local data = { }
 
-                    for name, command in pairs(package.scripts or { }) do
+                    for name, command in pairs(self.builder:read_package().scripts or { }) do
                         table.insert(data, {name = name, command = command})
                     end
 
@@ -92,7 +92,7 @@ function NodeSettings:uninstall_dependencies(deps, dev)
 end
 
 function NodeSettings:install_dependencies(items, dev)
-    local package = self.builder.read_package()
+    local package = self.builder:read_package()
     local deps = dev and package.devDependencies or package.dependencies
 
     local toremove = vim.tbl_filter(function(dep)
