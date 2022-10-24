@@ -234,7 +234,7 @@ local function setup(config)
             end
         end })
 
-    vim.api.nvim_create_user_command("IdeRecentProjects", function()
+    vim.api.nvim_create_user_command("IdeShowProjects", function()
         local ProjectsDialog = require("ide.internal.dialogs.projectsdialog")
 
         local dlgprojects = ProjectsDialog(ide, {

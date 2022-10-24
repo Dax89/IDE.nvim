@@ -78,7 +78,7 @@ require("ide").setup({
 - `Enter` and `Left Click`: Triggers the component's default event
 
 # Commands
-- `IdeRecentProjects`: Show recent projects
+- `IdeShowProjects`: Show saved projects
 - `IdeProjectCreate`: Open a dialog which allows to create new projects
 - `IdeProjectWrite`: Save the project in `ide.nvim` format (uses `project_file` from config)
 - `IdeProjectSettings`: Open current project's settings
