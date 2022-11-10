@@ -13,6 +13,7 @@ function TablePopup:init(header, data, title, options)
     self.title = title
 
     private[self] = {
+        buttons = vim.F.if_nil(options.buttons, { }),
         header = vim.F.if_nil(header, { }),
         data = vim.F.if_nil(data, { }),
         showaccept = vim.F.if_nil(options.showaccept, true),
@@ -25,6 +26,7 @@ function TablePopup:init(header, data, title, options)
         actions = options.actions,
         cellchange = options.cellchange,
         selected = options.selected,
+        buttonclick = options.buttonclick,
         change = options.change,
         remove = options.remove,
         add = options.add,
@@ -50,6 +52,20 @@ function TablePopup:init(header, data, title, options)
     if not private[self].showaccept and private[self].fullrow then
         self:map("<CR>", function() self:_do_accept() end, {builtin = true})
     end
+end
+
+function TablePopup:reload(header, data)
+    if header then
+        private[self].header = header
+    end
+
+    if data then
+        private[self].data = data
+    end
+
+    private[self].rowindex = -1
+    private[self].colindex = -1
+    self:update()
 end
 
 function TablePopup:get_data()
@@ -180,14 +196,81 @@ function TablePopup:on_move_right()
 end
 
 function TablePopup:update()
-    if vim.tbl_isempty(private[self].header) then
-        error("TablePopup: Header is empty")
+    local t = { }
+
+    if not vim.tbl_isempty(private[self].header) then
+        self:_update_table(t)
     end
 
+    local needsactions = vim.tbl_islist(private[self].actions) and not vim.tbl_isempty(private[self].actions)
+
+    if needsactions or private[self].showaccept then
+        self:fill_components(t, self.height - 4)
+
+        local actions, c = { }, 1
+
+        if needsactions then
+            table.insert(actions, Components.Button(private[self].actiontext, {
+                key = "z",
+                col = c,
+
+                click = function()
+                    vim.ui.select(private[self].actions, {
+                        prompt = "Actions"
+                    }, function(choice, idx)
+                        if choice and vim.is_callable(private[self].actionselected) then
+                            private[self].actionselected(choice, idx)
+                        end
+                    end)
+                end,
+            }))
+
+            c = c + #private[self].actiontext + 3
+        end
+
+        local buttons = private[self].buttons
+
+        if vim.is_callable(buttons) then
+            buttons = buttons(self)
+        end
+
+        if vim.tbl_islist(buttons) then
+            for i, b in ipairs(buttons) do
+                table.insert(actions, Components.Button(b, {
+                    col = c,
+                    key = "<Leader>" .. tostring(i),
+
+                    click = function()
+                        if vim.is_callable(private[self].buttonclick) then
+                            private[self].buttonclick(self, b, i)
+                        end
+                    end,
+                }))
+
+                c = c + #b + 3
+            end
+        end
+
+        if private[self].showaccept then
+            table.insert(actions, Components.Button(private[self].accepttext, {
+                key = "A",
+                col = -2,
+                click = function() self:_do_accept() end
+            }))
+        end
+
+        table.insert(t, actions)
+    end
+
+    self:set_components(t)
+    self:render()
+end
+
+function TablePopup:_update_table(t)
     local startcol, w = 0, math.ceil(self.width / #private[self].header)
     self:set_cursor(private[self].rowindex + 2, private[self].colindex * w)
 
-    local t, header = { }, vim.tbl_map(function(h)
+    local header = vim.tbl_map(function(h)
         local c = Components.Label(h.label or h.name, {
             col = startcol,
             width = w,
@@ -275,44 +358,6 @@ function TablePopup:update()
     end
 
     table.insert(t, 1, header)
-
-    local needsactions = vim.tbl_islist(private[self].actions) and not vim.tbl_isempty(private[self].actions)
-
-    if needsactions or private[self].showaccept then
-        self:fill_components(t, self.height - 4)
-
-        local buttons = { }
-
-        if needsactions then
-            table.insert(buttons, Components.Button(private[self].actiontext, {
-                key = "z",
-                col = 1,
-
-                click = function()
-                    vim.ui.select(private[self].actions, {
-                        prompt = "Actions"
-                    }, function(choice, idx)
-                        if choice and vim.is_callable(private[self].actionselected) then
-                            private[self].actionselected(choice, idx)
-                        end
-                    end)
-                end,
-            }))
-        end
-
-        if private[self].showaccept then
-            table.insert(buttons, Components.Button(private[self].accepttext, {
-                key = "A",
-                col = -2,
-                click = function() self:_do_accept() end
-            }))
-        end
-
-        table.insert(t, buttons)
-    end
-
-    self:set_components(t)
-    self:render()
 end
 
 function TablePopup:_update_index(rowindex, colindex, force)

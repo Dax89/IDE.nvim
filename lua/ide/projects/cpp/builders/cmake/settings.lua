@@ -3,10 +3,10 @@ local Dialogs = require("ide.internal.dialogs")
 
 local CMakeSettings = Utils.class(Dialogs.ConfigDialog)
 
-function CMakeSettings:init(builder, header)
+function CMakeSettings:init(builder, options)
     builder:configure()
 
-    Dialogs.ConfigDialog.init(self, builder, header, {
+    Dialogs.ConfigDialog.init(self, builder, vim.tbl_extend("keep", {
         actions = {"Configure", "Assign Target"},
 
         actionselected = function(_, idx)
@@ -23,7 +23,7 @@ function CMakeSettings:init(builder, header)
                 end)
             end
         end
-    })
+    }, options or { }))
 
     vim.api.nvim_command("wincmd p")
 end

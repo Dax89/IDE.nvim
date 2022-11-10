@@ -54,39 +54,42 @@ end
 function Builder:on_ready()
 end
 
-function Builder:do_run_cmd(cmd, config, options)
+function Builder:do_run_cmd(cmd, runconfig, options)
     if type(cmd) == "string" then
         cmd = vim.split(cmd, " ")
     end
 
     if not vim.tbl_isempty(cmd) then
-        self.project:new_job(cmd[1], vim.list_slice(cmd, 2), vim.tbl_extend("force", options or { }, {title = "Run - " .. config.name, state = "run"}))
+        self.project:new_job(cmd[1], vim.list_slice(cmd, 2), vim.tbl_extend("force", options or { }, {title = "Run - " .. runconfig.name, state = "run"}))
     end
 end
 
-function Builder:do_run(filepath, args, config, options)
-    self.project:new_job(filepath, args, vim.tbl_extend("force", options or { }, {title = "Run - " .. config.name or Utils.get_filename(filepath), state = "run"}))
+function Builder:do_run(filepath, args, runconfig, options)
+    self.project:new_job(filepath, args, vim.tbl_extend("force", options or { }, {title = "Run - " .. runconfig.name or Utils.get_filename(filepath), state = "run"}))
 end
 
-function Builder:check_and_run(filepath, args, config, options)
+function Builder:check_and_run(filepath, args, runconfig, options)
     local p = Path:new(filepath)
 
     if not p:is_file() then
         self:build(nil, function(_, code)
             if code == 0 then
-                self:do_run(p, args, config, options)
+                self:do_run(p, args, runconfig, options)
             end
         end)
     else
-        self:do_run(p, args, config)
+        self:do_run(p, args, runconfig)
     end
 end
 
-function Builder:check_settings(cb)
-    local selcfg = self.project:get_selected_config()
+function Builder:check_settings(cb, options)
+    options = options or { }
 
-    if selcfg then
-        cb(self, selcfg)
+    local selcfg = self.project:get_selected_config()
+    local selruncfg = self.project:get_selected_runconfig()
+
+    if (options.checkconfig == false or selcfg) and (options.checkrunconfig == false or selruncfg) then
+        cb(self, selcfg, selruncfg)
         return
     end
 
@@ -94,7 +97,7 @@ function Builder:check_settings(cb)
 
     if dlg then
         dlg(self):popup(function()
-            self:check_settings(cb) -- Check settings again
+            self:check_settings(cb, options) -- Check settings again
         end)
     end
 end

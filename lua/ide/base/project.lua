@@ -23,8 +23,10 @@ function Project:init(config, path, name, builder)
         target = nil,
         builder = builder,
         vars = { },
-        selconfig = nil,
         config = { },
+        runconfig = { },
+        selconfig = nil,
+        selrunconfig = nil,
     }
 
     local projfile = Path:new(self.path, config.project_file)
@@ -89,6 +91,10 @@ function Project:get_selected_config()
     return self.data.config[self.data.selconfig]
 end
 
+function Project:get_selected_runconfig()
+    return self.data.runconfig[self.data.selrunconfig]
+end
+
 function Project:set_selected_config(v)
     if self.data.config[v] == nil then
         error("Configuration '" .. v .. "' not found")
@@ -97,12 +103,28 @@ function Project:set_selected_config(v)
     end
 end
 
-function Project:check_config(name, config)
-    if self.data.config[name] == nil then
-        self:set_config(name, config)
+function Project:set_selected_runconfig(v)
+    if self.data.runconfig[v] == nil then
+        error("Run Configuration '" .. v .. "' not found")
+    else
+        self.data.selrunconfig = v
+    end
+end
+
+function Project:_check_config(gconfig, name, config)
+    if gconfig[name] == nil then
+        self:_set_config(gconfig, name, config)
     end
 
-    return self.data.config[name]
+    return gconfig[name]
+end
+
+function Project:check_config(name, config)
+    return self:_check_config(self.data.config, name, config)
+end
+
+function Project:check_runconfig(name, config)
+    return self:_check_config(self.data.runconfig, name, config)
 end
 
 function Project:reset_config()
@@ -110,29 +132,54 @@ function Project:reset_config()
     self.data.selconfig = nil
 end
 
-function Project:set_config(name, config, reset)
+function Project:reset_runconfig()
+    self.data.runconfig = { }
+    self.data.selrunconfig = nil
+end
+
+function Project:_get_config(gconfig, name)
+    vim.validate({
+        name = {name, {"string", "nil"}},
+    })
+
+    return name == nil and gconfig or gconfig[name]
+end
+
+function Project:_set_config(gconfig, name, config)
     vim.validate({
         name = {name, "string"},
         config = {config, {"table", "nil"}},
     })
 
-    if reset == true then
-        self.data.config = { }
-        self.data.selconfig = nil
-        self.data.config = { }
-        self.data.selconfig = nil
-    end
-
+    config = vim.F.if_nil(config, { })
     config.name = name
-    self.data.config[name] = config
+    gconfig[name] = config
 end
 
 function Project:get_config(name)
-    vim.validate({
-        name = {name, {"string", "nil"}},
-    })
+    return self:_get_config(self.data.config, name)
+end
 
-    return name == nil and self.data.config or self.data.config[name]
+function Project:set_config(name, config, reset)
+    self:_set_config(self.data.config, name, config)
+
+    if reset == true then
+        self.data.config = { }
+        self.data.selconfig = nil
+    end
+end
+
+function Project:get_runconfig(name)
+    return self:_get_config(self.data.runconfig, name)
+end
+
+function Project:set_runconfig(name, config, reset)
+    self:_set_config(self.data.runconfig, name, config)
+
+    if reset == true then
+        self.data.runconfig = { }
+        self.data.selrunconfig = nil
+    end
 end
 
 function Project:is_virtual()

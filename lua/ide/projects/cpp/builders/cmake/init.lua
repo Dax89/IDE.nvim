@@ -14,18 +14,22 @@ end
 function CMake:on_ready()
     self:_configure({
         onexit = function()
-            local hasdefaulttarget = vim.tbl_contains(self:get_targets(CMake.BUILD_MODES[1]), self.project:get_name())
-
             for _, m in ipairs(CMake.BUILD_MODES) do
-                self.project:check_config(m, {
-                    mode = m,
-                    cwd = self.project:get_build_path(true, m),
-                    target = hasdefaulttarget and self.project:get_name() or nil
-                })
+                self.project:check_config(m, {mode = m})
             end
 
             if not self.project:get_selected_config() then
                 self.project:set_selected_config(CMake.BUILD_MODES[1])
+            end
+
+            local targets = self:get_targets(CMake.BUILD_MODES[1])
+
+            for _, tgt in ipairs(targets) do
+                self.project:check_runconfig(tgt, {target = tgt})
+            end
+
+            if not vim.tbl_isempty(targets) and not self.project:get_selected_runconfig() then
+                self.project:set_selected_runconfig(targets[1])
             end
 
             self.project:write()
@@ -55,17 +59,21 @@ function CMake:get_modes()
     return CMake.BUILD_MODES
 end
 
-function CMake:get_targets(mode)
-    if not mode then
-        mode = self.project:get_selected_config().mode
-    end
+function CMake:get_targets(mode, type)
+    mode = vim.F.if_nil(mode, self.project:get_selected_config().mode)
+    type = vim.F.if_nil(type, "EXECUTABLE")
 
     local codemodel = self:_read_query("codemodel-v2", mode)
 
     if codemodel and codemodel.configurations and not vim.tbl_isempty(codemodel.configurations) then
-        return vim.tbl_map(function(t)
-            return t.name
+        local targets = vim.tbl_filter(function(x)
+            local targetdata = self:_read_query("target-" .. x.name)
+            return targetdata and targetdata.type == type
         end, codemodel.configurations[1].targets)
+
+        return vim.tbl_map(function(x)
+            return x.name
+        end, targets)
     end
 
     return {}
@@ -114,15 +122,13 @@ function CMake:build(_, onexit)
 end
 
 function CMake:run()
-    self:check_settings(function(_, config)
-        local targetdata = self:_read_query("target-" .. config.target)
+    self:check_settings(function(_, _, runconfig)
+        local targetdata = self:_read_query("target-" .. runconfig.target)
 
         if targetdata then
-            if targetdata.type == "EXECUTABLE" then
-                self:check_and_run(Path:new(self.project:get_build_path(true), targetdata.artifacts[1].path), config.cmdline, config)
-            else
-                Utils.notify("Cannot run target of type '" .. targetdata.type .. "'")
-            end
+            self:check_and_run(Path:new(self.project:get_build_path(true), targetdata.artifacts[1].path), runconfig.cmdline, runconfig)
+        else
+            Utils.notify("Cannot run configuration'" .. runconfig.name .. "'")
         end
     end)
 end
@@ -142,16 +148,24 @@ function CMake:settings()
     local dlg = self:get_settings_dialog()
 
     if dlg then
-        dlg(self, {
+        local buildheader = {
             {
                 name = "mode", label = "Mode", type = Cells.SelectCell,
                 items = function() return self:get_modes() end
             },
+        }
+
+        local runheader = {
             {
                 name = "target", label = "Target", type = Cells.SelectCell,
                 items = function() return self:get_targets() end
             },
-            {name = "cmdline", label = "Command Line", type = Cells.InputCell},
+        }
+
+        dlg(self, {
+            buildheader = buildheader,
+            runheader = runheader,
+            showcommand = false
         }):popup(function()
             self:configure()
         end)

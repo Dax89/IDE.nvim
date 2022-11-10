@@ -29,6 +29,21 @@ function Dialog:init(title, options)
     self:_create_mapping()
 end
 
+function Dialog:get_title()
+    return private[self].title
+end
+
+function Dialog:set_title(title)
+    vim.validate({
+        title = {title, "string"},
+    })
+
+    if title ~= private[self].title then
+        private[self].title = title
+        self:render()
+    end
+end
+
 function Dialog:_get_baseidx()
     local baseidx = 3
 

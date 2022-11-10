@@ -10,10 +10,10 @@ end
 
 function Node:on_ready()
     local package = self:read_package()
-    local defcfg = self.project:get_selected_config()
+    local defcfg = self.project:get_selected_runconfig()
 
     for name, command in pairs(package.scripts or { }) do
-        local cfg = self.project:check_config(name, {command = command})
+        local cfg = self.project:check_runconfig(name, {command = command})
 
         if not defcfg then
             defcfg = cfg
@@ -21,7 +21,7 @@ function Node:on_ready()
     end
 
     if defcfg then
-        self.project:set_selected_config(defcfg.name)
+        self.project:set_selected_runconfig(defcfg.name)
     end
 
     self.project:write()
@@ -31,7 +31,7 @@ function Node:config_to_scripts()
     local package = self:read_package()
     package.scripts = { }
 
-    for name, cfg in pairs(self.project:get_config()) do
+    for name, cfg in pairs(self.project:get_runconfig()) do
         package.scripts[name] = cfg.command
     end
 
@@ -53,9 +53,9 @@ function Node:create(data)
 end
 
 function Node:run()
-    self:check_settings(function(_, config)
-        self:do_run_cmd(config.command, config, {src = true})
-    end)
+    self:check_settings(function(_, _, runconfig)
+        self:do_run_cmd(runconfig.command, runconfig, {src = true})
+    end, {checkconfig = false})
 end
 
 function Node:read_package()

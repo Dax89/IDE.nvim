@@ -5,44 +5,40 @@ local Popups = require("ide.ui.popups")
 local private = Utils.private_stash()
 local ConfigDialog = Utils.class(Popups.TablePopup)
 
-function ConfigDialog:init(builder, header, options)
+function ConfigDialog:init(builder, options)
     options = options or { }
 
     private[self] = {
-        showcommand = options.showcommand == true
+        showcommand = options.showcommand ~= false,
+        showarguments = options.showarguments ~= false,
+        showworkingdir = options.showworkingdir ~= false,
+        togglemode = options.togglemode ~= false,
+        buildmode = options.buildmode ~= false,
+        buildheader = vim.F.if_nil(options.buildheader, { }),
+        runheader = vim.F.if_nil(options.runheader, { }),
+        change = options.change
     }
 
     self.builder = builder
     self.project = builder.project
 
-    local data = vim.tbl_values(self.project:get_config())
-    local selcfg = self.project:get_selected_config()
-
-    for _, cfg in ipairs(data) do
-        if selcfg and cfg.name == selcfg.name then
-            cfg.selected = true
-            break
-        end
-    end
-
-    local fullheader = vim.list_extend({
-        {name = "selected", label = "Selected", type = Cells.CheckCell},
-        {name = "name", label = "Name", type = Cells.InputCell},
-    }, header or { })
-
-    if private[self].showcommand then
-        fullheader = vim.list_extend(fullheader, {
-            {name = "command", label = "Command", type = Cells.InputCell},
-        })
-    end
-
-    fullheader = vim.list_extend(fullheader, {
-        {name = "cwd", label = "Working Dir", type = Cells.PickerCell, options = {onlydirs = true}},
-    })
-
-    Popups.TablePopup.init(self, fullheader, data,
-    vim.F.if_nil(options.title, self.project:get_name() .. " - Configuration"),
+    Popups.TablePopup.init(self, self:_get_header(), self:_get_data(), self:_get_title(),
     vim.tbl_extend("force", options, {
+        buttons = function()
+            if private[self].togglemode then
+                return private[self].buildmode and {"Run Config"} or {"Build Config"}
+            end
+
+            return { }
+        end,
+
+        buttonclick = function()
+            self:_update_config(self:get_data())
+            private[self].buildmode = not private[self].buildmode
+            self:set_title(self:_get_title())
+            self:reload(self:_get_header(), self:_get_data())
+        end,
+
         cellchange = function(_, arg)
             if arg.header.name == "selected" then
                 for i, r in ipairs(arg.data) do
@@ -60,21 +56,122 @@ function ConfigDialog:init(builder, header, options)
         end,
 
         change = function(_, v)
-            self.project:reset_config()
-
-            for _, cfg in ipairs(v) do
-                self.project:set_config(cfg.name, cfg)
-
-                if cfg.selected then
-                    self.project:set_selected_config(cfg.name)
-                end
-            end
-
-            if vim.is_callable(options.change) then
-                options.change(self, v) -- Forward event
-            end
+            self:_update_config(v)
         end
     }))
+end
+
+function ConfigDialog:_update_config(data)
+    if private[self].buildmode then
+        self.project:reset_config()
+    else
+        self.project:reset_runconfig()
+    end
+
+    for _, cfg in ipairs(data) do
+        if private[self].buildmode then
+            self.project:set_config(cfg.name, cfg)
+        else
+            self.project:set_runconfig(cfg.name, cfg)
+        end
+
+        if cfg.selected then
+            if private[self].buildmode then
+                self.project:set_selected_config(cfg.name)
+            else
+                self.project:set_selected_runconfig(cfg.name)
+            end
+        end
+    end
+
+    if vim.is_callable(private[self].change) then
+        private[self].change(self, data, private[self].buildmode) -- Forward event
+    end
+end
+
+function ConfigDialog:_get_title()
+    if private[self].buildmode then
+       return self.project:get_name() .. " - Build Configuration"
+    end
+
+    return self.project:get_name() .. " - Run Configuration"
+end
+
+function ConfigDialog:_get_build_header()
+    return vim.list_extend({
+        {name = "selected", label = "Selected", type = Cells.CheckCell},
+        {name = "name", label = "Name", type = Cells.InputCell},
+    }, private[self].buildheader or { })
+end
+
+function ConfigDialog:_get_build_data()
+    local data = vim.tbl_values(self.project:get_config())
+    local selcfg = self.project:get_selected_config()
+
+    for _, cfg in ipairs(data) do
+        if selcfg and cfg.name == selcfg.name then
+            cfg.selected = true
+            break
+        end
+    end
+
+    return data
+end
+
+function ConfigDialog:_get_run_header()
+    local fullheader = vim.list_extend({
+        {name = "selected", label = "Selected", type = Cells.CheckCell},
+        {name = "name", label = "Name", type = Cells.InputCell},
+    }, private[self].runheader or { })
+
+    if private[self].showcommand then
+        table.insert(fullheader, {
+            name = "command",
+            label = "Command",
+            type = Cells.InputCell
+        })
+    end
+
+    if private[self].showarguments then
+        table.insert(fullheader, {
+            name = "arguments",
+            label = "Arguments",
+            type = Cells.InputCell
+        })
+    end
+
+    if private[self].showworkingdir then
+        table.insert(fullheader, {
+            name = "cwd",
+            label = "Working Dir",
+            type = Cells.PickerCell,
+            options = {onlydirs = true}
+        })
+    end
+
+    return fullheader
+end
+
+function ConfigDialog:_get_run_data()
+    local data = vim.tbl_values(self.project:get_runconfig())
+    local selcfg = self.project:get_selected_runconfig()
+
+    for _, cfg in ipairs(data) do
+        if selcfg and cfg.name == selcfg.name then
+            cfg.selected = true
+            break
+        end
+    end
+
+    return data
+end
+
+function ConfigDialog:_get_header()
+    return private[self].buildmode and self:_get_build_header() or self:_get_run_header()
+end
+
+function ConfigDialog:_get_data()
+    return private[self].buildmode and self:_get_build_data() or self:_get_run_data()
 end
 
 function ConfigDialog:_get_unique_name(name, data, skipidx)
@@ -91,7 +188,9 @@ function ConfigDialog:_get_unique_name(name, data, skipidx)
 
     c = 0
 
-    while self.project:get_config(n) do
+    local getcfg = private[self].buildmode and self.project.get_config or self.project.get_runconfig
+
+    while getcfg(self.project, n) do
         n = name .. "_" .. tostring(c)
         c = c + 1
     end

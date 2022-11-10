@@ -12,14 +12,17 @@ end
 
 function Zig:on_ready()
     for _, m in ipairs(Zig.BUILD_MODES) do
-        self.project:check_config(m, {
-            mode = m,
-            cwd = self.project:get_build_path(true, m),
-        })
+        self.project:check_config(m, {mode = m})
     end
 
     if not self.project:get_selected_config() then
         self.project:set_selected_config(Zig.BUILD_MODES[1])
+    end
+
+    self.project:check_runconfig(self.project:get_name(), { })
+
+    if not self.project:get_selected_runconfig() then
+        self.project:set_selected_runconfig(self.project:get_name())
     end
 
     self.project:write()
@@ -58,8 +61,8 @@ function Zig:build(_, onexit)
 end
 
 function Zig:run()
-    self:check_settings(function(_, config)
-        self:check_and_run(Path:new(self.project:get_build_path(), self.project:get_name()), config.cmdline, config)
+    self:check_settings(function(_, _, runconfig)
+        self:check_and_run(Path:new(self.project:get_build_path(), self.project:get_name()), runconfig.cmdline, runconfig)
     end)
 end
 

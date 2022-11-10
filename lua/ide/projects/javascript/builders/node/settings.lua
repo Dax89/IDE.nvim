@@ -56,22 +56,22 @@ function NodeSettings:init(builder)
                 background = "secondary",
 
                 click = function()
-                    ConfigDialog(self.builder, nil, {showcommand = true}):popup()
+                    ConfigDialog(self.builder, {
+                        buildmode = false,
+                        togglemode = false,
+                        showworkingdir = false,
+                        showarguments = false,
+                    }):popup(function()
+                        self.builder:config_to_scripts()
+                    end)
                 end,
-
-                data = function()
-                    local data = { }
-
-                    for name, command in pairs(self.builder:read_package().scripts or { }) do
-                        table.insert(data, {name = name, command = command})
-                    end
-
-                    return data
-                end,
-                change = function() self.builder:config_to_scripts() end
             }),
 
-            Components.Button("Save", {col = -1, click = function() self:accept() end}),
+            Components.Button("Save", {
+                key = "A",
+                col = -1,
+                click = function() self:accept() end
+            }),
         }
     })
 end

@@ -15,18 +15,22 @@ function Cargo:get_type()
 end
 
 function Cargo:on_ready()
-    local hasdefaulttarget = vim.tbl_contains(self:get_targets(), self.project:get_name())
-
     for _, m in ipairs(Cargo.BUILD_MODES) do
-        self.project:check_config(m, {
-            mode = m,
-            cwd = self.project:get_build_path(true, m),
-            target = hasdefaulttarget and self.project:get_name() or nil
-        })
+        self.project:check_config(m, {mode = m})
     end
 
     if not self.project:get_selected_config() then
         self.project:set_selected_config(Cargo.BUILD_MODES[1])
+    end
+
+    local targets = self:get_targets()
+
+    for _, tgt in ipairs(targets) do
+        self.project:check_runconfig(tgt, {target = tgt})
+    end
+
+    if not vim.tbl_isempty(targets) and not self.project:get_selected_runconfig() then
+        self.project:set_selected_runconfig(targets[1])
     end
 
     self.project:write()
@@ -76,8 +80,8 @@ function Cargo:build(_, onexit)
 end
 
 function Cargo:run()
-    self:check_settings(function(_, config)
-        self:check_and_run(Path:new(self.project:get_build_path(), config.target), config.cmdline, config)
+    self:check_settings(function(_, _, runconfig)
+        self:check_and_run(Path:new(self.project:get_build_path(), runconfig.target), runconfig.cmdline, runconfig)
     end)
 end
 
