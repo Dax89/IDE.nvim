@@ -50,7 +50,11 @@ function Project:init(config, path, name, builder)
 
         self.builder = BuilderType(self)
     else
-        Log.debug("Project: Loading '" .. self:get_name() .. "', type: '" .. self:get_type() .. "', builder: 'nvide'")
+        if self:is_virtual() then
+            Log.debug("Project: Loading '" .. self:get_name() .. "', type: *VIRTUAL*, builder: 'nvide'")
+        else
+            Log.debug("Project: Loading '" .. self:get_name() .. "', type: '" .. self:get_type() .. "', builder: 'nvide'")
+        end
         self.builder = require("ide.base.builder")(self)
     end
 end

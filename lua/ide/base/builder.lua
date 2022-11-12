@@ -103,6 +103,10 @@ function Builder:check_settings(cb, options)
 end
 
 function Builder:get_settings_dialog()
+    if self.project:is_virtual() then
+        return require("ide.internal.dialogs.configdialog")
+    end
+
     local ok, d = pcall(require, "ide.projects." .. self.project:get_type() ..
                                  ".builders." .. self:get_type() ..
                                  ".settings")
