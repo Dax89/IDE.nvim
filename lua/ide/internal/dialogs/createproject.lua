@@ -9,7 +9,7 @@ local CreateProjectDialog = Utils.class(Dialogs.TabsDialog)
 function CreateProjectDialog:init(ide)
     self.ide = ide
 
-    Dialogs.TabsDialog.init(self, {"Configuration", "Location"},"Create Project", {
+    Dialogs.TabsDialog.init(self, {"Configuration", "Location"}, "Create Project", {
         width = Screen.get_width("60%"),
         wizard = true,
     })
@@ -76,6 +76,7 @@ function CreateProjectDialog:on_accept(data)
             Utils.os_execute("git", {"init", rootpath})
         end
 
+        self.ide:update_recents(p)
         self.ide:pick_file(rootpath)
     end
 end

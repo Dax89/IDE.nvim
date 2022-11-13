@@ -33,7 +33,7 @@ function IDE:load_recents()
     return recents, recentspath
 end
 
-function IDE:_update_recents(project)
+function IDE:update_recents(project)
     if project:is_virtual() then
         return
     end
@@ -149,12 +149,8 @@ function IDE:project_check(filepath, filetype)
         if not self.projects[projcfg.root] then
             local project = ProjectType(self.config, projcfg.root, projcfg.name, projcfg.config.builder)
             self.projects[projcfg.root] = project
-            self:_update_recents(project)
-
-            vim.defer_fn(function()
-                project:on_ready()
-                project:write()
-            end, 1000)
+            self:update_recents(project)
+            project:write()
         else
             Log.debug("IDE.project_check(): Project: '" .. self.project[projcfg.root] .. "' already loaded, skipping...")
         end
