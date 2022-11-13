@@ -10,6 +10,44 @@ function Zig:get_type()
     return "zig"
 end
 
+function Zig:get_steps()
+    local buildzig = Path:new(self.project:get_path(), "build.zig")
+
+    if not buildzig:is_file() then
+        return { }
+    end
+
+    local PATTERN = [[b.step%(%s*"(.+)",%s*"(.+)"%s*%);]];
+    local lines = Utils.read_lines(tostring(buildzig))
+    local steps = { }
+
+    for _, line in ipairs(lines) do
+        local name, description = line:match(PATTERN)
+
+        if name and description then
+            table.insert(steps, {name = name, description = description})
+        end
+    end
+
+    return steps
+end
+
+function Zig:_sync_runconfig()
+    self.project:reset_runconfig()
+
+    local steps = self:get_steps()
+
+    for _, step in ipairs(steps) do
+        self.project:check_runconfig(step.name, step)
+    end
+
+    if not vim.tbl_isempty(steps) and not self.project:get_selected_runconfig() then
+        self.project:set_selected_runconfig(steps[1].name)
+    end
+
+    self.project:write()
+end
+
 function Zig:on_ready()
     for _, m in ipairs(Zig.BUILD_MODES) do
         self.project:check_config(m, {mode = m})
@@ -19,13 +57,7 @@ function Zig:on_ready()
         self.project:set_selected_config(Zig.BUILD_MODES[1])
     end
 
-    self.project:check_runconfig(self.project:get_name(), { })
-
-    if not self.project:get_selected_runconfig() then
-        self.project:set_selected_runconfig(self.project:get_name())
-    end
-
-    self.project:write()
+    self:_sync_runconfig()
 end
 
 function Zig:create(data)
@@ -62,7 +94,7 @@ end
 
 function Zig:run()
     self:check_settings(function(_, _, runconfig)
-        self:check_and_run(Path:new(self.project:get_build_path(), self.project:get_name()), runconfig.cmdline, runconfig)
+        self:do_run_cmd({"zig", "build", runconfig.name}, runconfig, {src = true})
     end)
 end
 
@@ -70,12 +102,16 @@ function Zig:settings()
     local dlg = self:get_settings_dialog()
 
     if dlg then
+        self:_sync_runconfig()
+
         dlg(self, {
-            {
-                name = "mode", label = "Mode", type = Cells.SelectCell,
-                items = function() return Zig.BUILD_MODES end
+            runheader = {
+                {name = "description", label = "Description", type = Cells.LabelCell},
             },
-            {name = "cmdline", label = "Command Line", type = Cells.InputCell},
+            showcommand = false,
+            showarguments = false,
+            showworkingdir = false,
+            editable = false,
         }):popup()
     end
 end
