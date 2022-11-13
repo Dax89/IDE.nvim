@@ -68,6 +68,11 @@ function M.os_execute(cmd, args, cwd, options)
     }, options or { })):sync()
 end
 
+function M.read_lines(filepath)
+    local data = M.read_file(filepath)
+    return vim.split(data, "\n")
+end
+
 function M.read_file(filepath)
     local io = require("io")
     local f = io.open(tostring(filepath), "r")
