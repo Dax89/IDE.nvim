@@ -9,6 +9,7 @@ function ConfigDialog:init(builder, options)
     options = options or { }
 
     private[self] = {
+        editable = options.editable ~= false,
         showcommand = options.showcommand ~= false,
         showarguments = options.showarguments ~= false,
         showworkingdir = options.showworkingdir ~= false,
@@ -23,7 +24,7 @@ function ConfigDialog:init(builder, options)
     self.project = builder.project
 
     Popups.TablePopup.init(self, self:_get_header(), self:_get_data(), self:_get_title(),
-    vim.tbl_extend("force", options, {
+    {
         buttons = function()
             if private[self].togglemode then
                 return private[self].buildmode and {"Run Config"} or {"Build Config"}
@@ -58,7 +59,7 @@ function ConfigDialog:init(builder, options)
         change = function(_, v)
             self:_update_config(v)
         end
-    }))
+    })
 end
 
 function ConfigDialog:_update_config(data)
@@ -97,10 +98,14 @@ function ConfigDialog:_get_title()
     return self.project:get_name() .. " - Run Configuration"
 end
 
+function ConfigDialog:_check_editable_cell(celltype)
+    return private[self].editable and celltype or Cells.LabelCell
+end
+
 function ConfigDialog:_get_build_header()
     return vim.list_extend({
         {name = "selected", label = "Selected", type = Cells.CheckCell},
-        {name = "name", label = "Name", type = Cells.InputCell},
+        {name = "name", label = "Name", type = self:_check_editable_cell(Cells.InputCell)},
     }, private[self].buildheader or { })
 end
 
@@ -121,14 +126,14 @@ end
 function ConfigDialog:_get_run_header()
     local fullheader = vim.list_extend({
         {name = "selected", label = "Selected", type = Cells.CheckCell},
-        {name = "name", label = "Name", type = Cells.InputCell},
+        {name = "name", label = "Name", type = self:_check_editable_cell(Cells.InputCell)},
     }, private[self].runheader or { })
 
     if private[self].showcommand then
         table.insert(fullheader, {
             name = "command",
             label = "Command",
-            type = Cells.InputCell
+            type = self:_check_editable_cell(Cells.InputCell)
         })
     end
 
@@ -136,7 +141,7 @@ function ConfigDialog:_get_run_header()
         table.insert(fullheader, {
             name = "arguments",
             label = "Arguments",
-            type = Cells.InputCell
+            type = self:_check_editable_cell(Cells.InputCell)
         })
     end
 
@@ -144,7 +149,7 @@ function ConfigDialog:_get_run_header()
         table.insert(fullheader, {
             name = "cwd",
             label = "Working Dir",
-            type = Cells.PickerCell,
+            type = self:_check_editable_cell(Cells.PickerCell),
             options = {onlydirs = true}
         })
     end
