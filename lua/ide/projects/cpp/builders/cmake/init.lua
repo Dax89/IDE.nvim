@@ -128,19 +128,25 @@ function CMake:run()
         if targetdata then
             self:check_and_run(Path:new(self.project:get_build_path(true), targetdata.artifacts[1].path), runconfig.cmdline, runconfig)
         else
-            Utils.notify("Cannot run configuration'" .. runconfig.name .. "'")
+            Utils.notify("Cannot run configuration '" .. runconfig.name .. "'")
         end
     end)
 end
 
 function CMake:debug(options)
-    self:check_settings(function(_, config)
-        self.project:run_dap({
-            request = "launch",
-            type = "codelldb",
-            program = tostring(Path:new(self.project:get_build_path(true), config.target)),
-            args = config.cmdline,
-        }, options or { })
+    self:check_settings(function(_, _, runconfig)
+        local targetdata = self:_read_query("target-" .. runconfig.target)
+
+        if targetdata then
+            self.project:run_dap({
+                request = "launch",
+                type = "codelldb",
+                program = tostring(Path:new(self.project:get_build_path(true), targetdata.artifacts[1].path)),
+                args = runconfig.arguments and vim.split(runconfig.arguments, " ") or nil,
+            }, options or { })
+        else
+            Utils.notify("Cannot debug configuration '" .. runconfig.name .. "'")
+        end
     end)
 end
 
