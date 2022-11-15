@@ -1,13 +1,13 @@
 local M = { }
 
-function M._setup_ui(dap)
+function M._setup_ui(config, dap)
     local ok, dapui = pcall(require, "dapui")
 
     if not ok then
         error("DAP-UI plugin is not installed")
     end
 
-    dapui.setup()
+    dapui.setup(config.integrations.dapui.config)
 
     dap.listeners.after.event_initialized["dapui_config"] = function()
         dapui.open()
@@ -51,7 +51,7 @@ function M.setup(config)
     end
 
     if config.integrations.dapui and config.integrations.dapui.enable then
-        M._setup_ui(dap)
+        M._setup_ui(config, dap)
     end
 end
 
