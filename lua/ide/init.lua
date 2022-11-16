@@ -69,12 +69,13 @@ function IDE:pick_file(rootdir)
     local p = Utils.read_json(Path:new(tostring(rootdir), self.config.project_file))
 
     PickerDialog.select_file(function(filepath)
-        self:project_check(filepath, p.type)
+        local added = self:project_check(filepath, p.type)
         vim.api.nvim_command(":e " .. tostring(filepath))
 
-        vim.defer_fn(function()
+        if not added then
             self:get_active():on_ready()
-        end, 1000)
+            self:get_active():write()
+        end
     end, {cwd = rootdir, limitroot = true})
 end
 
@@ -145,11 +146,16 @@ function IDE:project_check(filepath, filetype)
         projcfg = self.rooter:find_rootpath(p:is_file() and p:parent() or p, filetype, ProjectType)
     end
 
+    local added = false
+
     if projcfg then
         if not self.projects[projcfg.root] then
+            added = true
+
             local project = ProjectType(self.config, projcfg.root, projcfg.name, projcfg.config.builder)
             self.projects[projcfg.root] = project
             self:update_recents(project)
+            project:on_ready()
             project:write()
         else
             Log.debug("IDE.project_check(): Project: '" .. self.project[projcfg.root] .. "' already loaded, skipping...")
@@ -164,6 +170,8 @@ function IDE:project_check(filepath, filetype)
         Log.debug("IDE.project_check(): File '" .. Utils.get_filename(p) .. "' doesn't belong to any project")
         self.active = nil
     end
+
+    return added
 end
 
 function IDE:project_create()
