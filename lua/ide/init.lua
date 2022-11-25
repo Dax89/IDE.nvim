@@ -211,7 +211,7 @@ end
 
 function IDE:project_write()
     if self.active then
-        self:get_active():write()
+        self:get_active():write(true)
     end
 end
 

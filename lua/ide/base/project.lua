@@ -123,6 +123,14 @@ function Project:_check_config(gconfig, name, config)
     return gconfig[name]
 end
 
+function Project:_project_filepath()
+    return Path:new(self:get_path(true), self.config.project_file)
+end
+
+function Project:_has_project_file()
+    return self:_project_filepath():exists()
+end
+
 function Project:check_config(name, config)
     return self:_check_config(self.data.config, name, config)
 end
@@ -362,8 +370,8 @@ function Project:save()
     end
 end
 
-function Project:write()
-    if self:get_type() then
+function Project:write(force)
+    if self:get_type() and (force == true or (self.config.auto_save == true or self:_has_project_file())) then
         Utils.write_json(Path:new(self:get_path(true), self.config.project_file), self.data)
     end
 end
