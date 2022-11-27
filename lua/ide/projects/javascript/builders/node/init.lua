@@ -54,7 +54,7 @@ end
 
 function Node:run()
     self:check_settings(function(_, _, runconfig)
-        self:do_run_cmd(runconfig.command, runconfig, {src = true})
+        self:do_run_cmd("npm run " .. runconfig.name, runconfig, {src = true})
     end, {checkconfig = false})
 end
 
