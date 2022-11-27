@@ -74,18 +74,26 @@ function M.read_lines(filepath)
 end
 
 function M.read_file(filepath)
-    local io = require("io")
-    local f = io.open(tostring(filepath), "r")
-    local data = f:read("*all")
-    f:close()
-    return data
+    local f = require("io").open(tostring(filepath), "r")
+
+    if f then
+        local data = f:read("*all")
+        f:close()
+        return data
+    end
+
+    error("Cannot read file '" .. tostring(filepath) .. "'")
 end
 
 function M.write_file(filepath, data)
-    local io = require("io")
-    local f = io.open(tostring(filepath), "w")
-    f:write(data)
-    f:close()
+    local f = require("io").open(tostring(filepath), "w")
+
+    if f then
+        f:write(data)
+        f:close()
+    else
+        print("Cannot write file '" .. tostring(filepath) .. "'")
+    end
 end
 
 function M.read_json(filepath)
