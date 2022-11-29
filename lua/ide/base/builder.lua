@@ -28,7 +28,7 @@ function Builder:debug(_)
     self.project:get_build_path():mkdir({parents = true, exists_ok = true})
 end
 
-function Builder:create(data)
+function Builder:create(_)
 end
 
 function Builder:run()
@@ -52,6 +52,12 @@ function Builder:settings()
 end
 
 function Builder:on_ready()
+end
+
+function Builder:on_config_changed(_)
+end
+
+function Builder:on_runconfig_changed(_)
 end
 
 function Builder:do_run_cmd(cmd, runconfig, options)

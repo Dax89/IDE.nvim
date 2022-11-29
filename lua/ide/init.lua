@@ -215,6 +215,18 @@ function IDE:project_write()
     end
 end
 
+function IDE:select_project_config()
+    if self.active then
+        self:get_active():select_config()
+    end
+end
+
+function IDE:select_project_runconfig()
+    if self.active then
+        self:get_active():select_runconfig()
+    end
+end
+
 local ide = nil
 
 local function setup(config)
@@ -276,6 +288,14 @@ local function setup(config)
 
     vim.api.nvim_create_user_command("IdeProjectConfigure", function()
         ide:project_configure()
+    end, { })
+
+    vim.api.nvim_create_user_command("IdeProjectSelectConfig", function()
+        ide:select_project_config()
+    end, { })
+
+    vim.api.nvim_create_user_command("IdeProjectSelectRunConfig", function()
+        ide:select_project_runconfig()
     end, { })
 
     if type(config.mappings) == "table" then

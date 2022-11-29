@@ -100,19 +100,35 @@ function Project:get_selected_runconfig()
 end
 
 function Project:set_selected_config(v)
+    if self.data.selconfig and self.data.config[self.data.selconfig] then
+        self.data.config[self.data.selconfig].selected = false
+    end
+
     if self.data.config[v] == nil then
         error("Configuration '" .. v .. "' not found")
-    else
+    elseif self.data.selconfig ~= v then
+        self.data.config[v].selected = true
         self.data.selconfig = v
+        return true
     end
+
+    return false
 end
 
 function Project:set_selected_runconfig(v)
+    if self.data.selconfig and self.data.runconfig[self.data.selrunconfig] then
+        self.data.runconfig[self.data.selrunconfig].selected = false
+    end
+
     if self.data.runconfig[v] == nil then
         error("Run Configuration '" .. v .. "' not found")
-    else
+    elseif self.data.selrunconfig ~= v then
+        self.data.runconfig[v].selected = true
         self.data.selrunconfig = v
+        return true
     end
+
+    return false
 end
 
 function Project:_check_config(gconfig, name, config)
@@ -413,6 +429,48 @@ function Project:run_dap(dapoptions, options)
             end,
         })
     end
+end
+
+function Project:_select_config(title, config, cb)
+    vim.ui.select(vim.tbl_keys(config), {
+        prompt = title,
+        format_item = function(item)
+            vim.pretty_print(config[item])
+            if config[item].selected then
+                return item .. " - SELECTED"
+            end
+
+            return item
+        end
+    }, function(choice)
+        if choice and vim.is_callable(cb) then
+            cb(choice)
+        end
+    end)
+end
+
+function Project:select_config()
+    return self:_select_config("Select Config", self.data.config, function(cfg)
+        if not self:set_selected_config(cfg) then
+            return
+        end
+
+        if self.builder then
+            self.builder:on_config_changed(self.data.config[cfg])
+        end
+    end)
+end
+
+function Project:select_runconfig()
+    return self:_select_config("Select Run Config", self.data.runconfig, function(cfg)
+        if not self:set_selected_runconfig(cfg) then
+            return
+        end
+
+        if self.builder then
+            self.builder:on_runconfig_changed(self.data.runconfig[cfg])
+        end
+    end)
 end
 
 function Project:on_ready()

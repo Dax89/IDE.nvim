@@ -90,6 +90,8 @@ require("ide").setup({
 - `IdeProjectDebug`: Debug the current project
 - `IdeProjectRun`: Run the current project
 - `IdeProjectConfigure`: Configure the current project
+- `IdeProjectSelectConfig`: Show current project config selector
+- `IdeProjectSelectRunConfig`: Show current project run config selector
 
 # API
 `require("ide")` provides these functions:
