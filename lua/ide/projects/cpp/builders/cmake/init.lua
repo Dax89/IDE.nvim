@@ -11,6 +11,10 @@ function CMake:get_type()
     return "cmake"
 end
 
+function Builder:on_config_changed(_)
+    self:configure()
+end
+
 function CMake:on_ready()
     self:_configure({
         onexit = function()
