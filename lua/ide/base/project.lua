@@ -493,5 +493,21 @@ function Project:on_ready()
     end
 end
 
+function Project:open_buildpath()
+    local p = self:get_build_path()
+
+    if p:exists() then
+        Utils.os_open(p)
+    end
+end
+
+function Project:open_sourcepath()
+    local p = self:get_path()
+
+    if p:exists() then
+        Utils.os_open(p)
+    end
+end
+
 return Project
 

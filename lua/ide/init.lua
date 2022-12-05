@@ -233,6 +233,18 @@ function IDE:select_project_runconfig()
     end
 end
 
+function IDE:open_project_buildpath()
+    if self.active then
+        self:get_active():open_buildpath()
+    end
+end
+
+function IDE:open_project_sourcepath()
+    if self.active then
+        self:get_active():open_sourcepath()
+    end
+end
+
 local ide = nil
 
 local function setup(config)
@@ -306,6 +318,14 @@ local function setup(config)
 
     vim.api.nvim_create_user_command("IdeProjectSelectRunConfig", function()
         ide:select_project_runconfig()
+    end, { })
+
+    vim.api.nvim_create_user_command("IdeProjectOpenSourcePath", function()
+        ide:open_project_sourcepath()
+    end, { })
+
+    vim.api.nvim_create_user_command("IdeProjectOpenBuildPath", function()
+        ide:open_project_buildpath()
     end, { })
 
     if type(config.mappings) == "table" then

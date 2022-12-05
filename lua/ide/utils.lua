@@ -64,6 +64,29 @@ function M.get_plugin_root()
     return require("plenary.path"):new(debug.getinfo(1).source:sub(2)):parent():parent():parent()
 end
 
+function M.os_open(arg)
+    arg = tostring(arg)
+
+    local uname = vim.loop.os_uname().sysname
+    local cmd = nil
+
+    if uname == "Windows" then
+        cmd = {command = "cmd", args = {"/c", "start", arg}}
+    elseif uname == "Darwin" then
+        cmd = {command = "open", args = {arg}}
+    elseif uname == "Linux" then
+        cmd = {command = "xdg-open", args = {arg}}
+    else
+        M.notify("Unsupported Platform '" .. uname .. "'", "warn", {title = "OS Open"})
+        return
+    end
+
+    require("plenary.job"):new({
+        command = cmd.command,
+        args = cmd.args,
+    }):start()
+end
+
 function M.os_execute(cmd, args, cwd, options)
     local Job = require("plenary.job")
 

@@ -94,6 +94,8 @@ require("ide").setup({
 - `IdeProjectConfigure`: Configure the current project
 - `IdeProjectSelectConfig`: Show current project config selector
 - `IdeProjectSelectRunConfig`: Show current project run config selector
+- `IdeProjectOpenSourcePath`: Open Project's source path with system viewer (if exists)
+- `IdeProjectOpenBuildPath`: Open Project's build path with system viewer (if exists)
 
 # API
 `require("ide")` provides these functions:
