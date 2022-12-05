@@ -89,6 +89,8 @@ require("ide").setup({
 - `IdeProjectSettings`: Open current project's settings
 - `IdeProjectDebug`: Debug the current project
 - `IdeProjectRun`: Run the current project
+- `IdeProjectBuild`: Build the current project
+- `IdeProjectStop`: Stop one or more running processes for the current project
 - `IdeProjectConfigure`: Configure the current project
 - `IdeProjectSelectConfig`: Show current project config selector
 - `IdeProjectSelectRunConfig`: Show current project run config selector

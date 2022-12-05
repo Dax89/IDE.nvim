@@ -61,15 +61,17 @@ function Zig:on_ready()
 end
 
 function Zig:create(data)
-    local _, code = self.project:execute("zig", {"init-" .. data.template}, {src = true})
+    local _, code = self.project:execute_async("zig", {"init-" .. data.template}, {src = true})
 
     if code ~= 0 then
         Utils.notify("Zig: Project creation failed", "error", {title = "ERROR"})
     end
 end
 
-function Zig:build(_, onexit)
-    self:check_settings(function(_, config)
+function Zig:build()
+    local s = self:check_settings()
+
+    if s then
         local b = self.project:get_build_path()
 
         local args = {
@@ -77,25 +79,26 @@ function Zig:build(_, onexit)
             "--prefix-exe-dir", Utils.get_filename(b)
         }
 
-        if config.mode ~= "debug" then
-            args = vim.list_extend(args, {"-D" .. config.mode .. "=true"})
+        if s.config.mode ~= "debug" then
+            args = vim.list_extend(args, {"-D" .. s.config.mode .. "=true"})
         end
 
         b:parent():mkdir({parents = true, exists_ok = true})
 
-        self.project:new_job("zig", args, {
+        self.project:execute_async("zig", args, {
             title = "Zig - Build",
             state = "build",
-            onexit = onexit,
             src = true,
         })
-    end)
+    end
 end
 
 function Zig:run()
-    self:check_settings(function(_, _, runconfig)
-        self:do_run_cmd({"zig", "build", runconfig.name}, runconfig, {src = true})
-    end)
+    local s = self:check_settings()
+
+    if s then
+        self:do_run_cmd({"zig", "build", s.runconfig.name}, {src = true})
+    end
 end
 
 function Zig:settings()
@@ -117,5 +120,4 @@ function Zig:settings()
 end
 
 return Zig
-
 

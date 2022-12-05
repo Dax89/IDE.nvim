@@ -7,7 +7,7 @@ local Cargo = Utils.class(Builder)
 Cargo.BUILD_MODES = {"debug", "release", "test", "bench"} -- https://doc.rust-lang.org/cargo/reference/profiles.html
 
 function Cargo:get_manifest()
-    return self.project:execute("cargo", {"read-manifest"}, {json = true, src = true})
+    return self.project:execute_async("cargo", {"read-manifest"}, {json = true, src = true})
 end
 
 function Cargo:get_type()
@@ -37,7 +37,7 @@ function Cargo:on_ready()
 end
 
 function Cargo:create(data)
-    local _, code = self.project:execute("cargo", {"init", "--" .. data.template, "--name", self.project:get_name(), self.project:get_path(true)}, {src = true})
+    local _, code = self.project:execute_async("cargo", {"init", "--" .. data.template, "--name", self.project:get_name(), self.project:get_path(true)}, {src = true})
 
     if code ~= 0 then
         Utils.notify("Cargo: Project creation failed", "error", {title = "ERROR"})
@@ -52,8 +52,14 @@ function Cargo:get_targets()
     end, m.targets)
 end
 
-function Cargo:build(_, onexit)
-    self:check_settings(function(_, config)
+function Cargo:get_executable_filepath(runconfig)
+    return Path:new(self.project:get_build_path(), runconfig.target)
+end
+
+function Cargo:build()
+    local s = self:check_settings()
+
+    if s then
         local b = self.project:get_build_path()
 
         local args = {
@@ -61,39 +67,42 @@ function Cargo:build(_, onexit)
             "--target-dir", tostring(b:parent())
         }
 
-        if config.mode == "release" then
+        if s.config.mode == "release" then
             args = vim.list_extend(args, {"-r"})
         end
 
-        if config.mode ~= "debug" then
-            args = vim.list_extend(args, {"--profile", config.mode})
+        if s.config.mode ~= "debug" then
+            args = vim.list_extend(args, {"--profile", s.config.mode})
         end
 
         b:mkdir({parents = true, exists_ok = true})
 
-        self.project:new_job("cargo", args, {
+        self.project:execute_async("cargo", args, {
             title = "Cargo - Build",
             state = "build",
-            onexit = onexit,
         })
-    end)
+    end
 end
 
 function Cargo:run()
-    self:check_settings(function(_, _, runconfig)
-        self:check_and_run(Path:new(self.project:get_build_path(), runconfig.target), runconfig.cmdline, runconfig)
-    end)
+    local s = self:check_settings()
+
+    if s then
+        self:do_run(self:get_executable_filepath(s.runconfig), s.runconfig.cmdline)
+    end
 end
 
 function Cargo:debug(options)
-    self:check_settings(function(_, config)
+    local s = self:check_settings()
+
+    if s then
         self.project:run_dap({
             request = "launch",
             type = "codelldb",
-            program = tostring(Path:new(self.project:get_build_path(), config.target)),
-            args = config.cmdline,
+            program = tostring(self:get_executable_filepath(s.runconfig)),
+            args = s.config.cmdline,
         }, options or { })
-    end)
+    end
 end
 
 function Cargo:settings()

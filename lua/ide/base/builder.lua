@@ -1,5 +1,6 @@
 local Utils = require("ide.utils")
 local Path = require("plenary.path")
+local Async = require("plenary.async")
 
 local Builder = Utils.class()
 
@@ -20,7 +21,7 @@ function Builder:configure()
     self.project:get_build_path():mkdir({parents = true, exists_ok = true})
 end
 
-function Builder:build(_, _)
+function Builder:build()
     self.project:get_build_path():mkdir({parents = true, exists_ok = true})
 end
 
@@ -32,10 +33,14 @@ function Builder:create(_)
 end
 
 function Builder:run()
-    local selcfg = self.project:get_selected_config()
+    local _, runcfg = self:check_settings()
 
-    if selcfg then
-        self:do_run_cmd(selcfg.command, selcfg, {cwd = vim.F.if_nil(selcfg.cwd, self.project:get_path(true))})
+    if runcfg then
+        self:do_run_cmd(runcfg.command, runcfg.name, {
+            cwd = vim.F.if_nil(runcfg.cwd, self.project:get_path(true))
+        })
+    else
+        vim.notify("Invalid run configuration")
     end
 end
 
@@ -60,52 +65,50 @@ end
 function Builder:on_runconfig_changed(_)
 end
 
-function Builder:do_run_cmd(cmd, runconfig, options)
-    if type(cmd) == "string" then
-        cmd = vim.split(cmd, " ")
-    end
-
-    if not vim.tbl_isempty(cmd) then
-        self.project:new_job(cmd[1], vim.list_slice(cmd, 2), vim.tbl_extend("force", options or { }, {title = "Run - " .. runconfig.name, state = "run"}))
-    end
+function Builder:do_run_cmd(cmd, args, options)
+    options = options or { }
+    local title = "Run - " .. vim.F.if_nil(options.title, cmd)
+    self.project:execute(cmd, args, vim.tbl_extend("force", options, {title = title, state = "run"}))
 end
 
-function Builder:do_run(filepath, args, runconfig, options)
-    self.project:new_job(filepath, args, vim.tbl_extend("force", options or { }, {title = "Run - " .. runconfig.name or Utils.get_filename(filepath), state = "run"}))
-end
-
-function Builder:check_and_run(filepath, args, runconfig, options)
-    local p = Path:new(filepath)
-
-    if not p:is_file() then
-        self:build(nil, function(_, code)
-            if code == 0 then
-                self:do_run(p, args, runconfig, options)
-            end
-        end)
-    else
-        self:do_run(p, args, runconfig)
-    end
-end
-
-function Builder:check_settings(cb, options)
+function Builder:do_run(filepath, args, options)
     options = options or { }
 
+    local p = Path:new(filepath)
+    local title = "Run - " .. vim.F.if_nil(options.title, Utils.get_filename(p))
+
+    if not p:is_file() or options.build == true then
+        self:build()
+    end
+
+    self.project:execute(p, args, vim.tbl_extend("force", options, {title = title, state = "run"}))
+end
+
+function Builder:_check_settings(options, c, callback)
     local selcfg = self.project:get_selected_config()
     local selruncfg = self.project:get_selected_runconfig()
 
     if (options.checkconfig == false or selcfg) and (options.checkrunconfig == false or selruncfg) then
-        cb(self, selcfg, selruncfg)
+        callback({config = selcfg, runconfig = selruncfg})
         return
+    end
+
+    if c > 0 then
+        callback(nil)
+        return -- Avoid infinite recursion
     end
 
     local dlg = self:get_settings_dialog()
 
     if dlg then
-        dlg(self):popup(function()
-            self:check_settings(cb, options) -- Check settings again
-        end)
+        dlg(self):exec()
+        self:_check_settings(options, c + 1, callback) -- Check settings again
     end
+end
+
+function Builder:check_settings(options)
+    local co = Async.wrap(self._check_settings, 4)
+    return co(self, options or { }, 0)
 end
 
 function Builder:get_settings_dialog()

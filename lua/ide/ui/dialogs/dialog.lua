@@ -1,3 +1,4 @@
+local Async = require("plenary.async")
 local Utils = require("ide.utils")
 local Window = require("ide.ui.base.window")
 local Model = require("ide.ui.base.model")
@@ -160,6 +161,12 @@ function Dialog:popup(cb)
     end
 
     self:show()
+end
+
+function Dialog:exec()
+    return Async.wrap(function(callback)
+        self:popup(callback)
+    end, 1)
 end
 
 function Dialog:fill_components(c, limit)

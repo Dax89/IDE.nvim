@@ -54,6 +54,12 @@ function M.get_number_of_cores()
     return #vim.tbl_keys(vim.loop.cpu_info())
 end
 
+function M.if_call(c, ...)
+    if vim.is_callable(c) then
+        c(...)
+    end
+end
+
 function M.get_plugin_root()
     return require("plenary.path"):new(debug.getinfo(1).source:sub(2)):parent():parent():parent()
 end

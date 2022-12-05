@@ -1,7 +1,7 @@
+local Async = require("plenary.async")
 local Utils = require("ide.utils")
 local Dialogs = require("ide.ui.dialogs")
 local Components = require("ide.ui.components")
-local Cells = require("ide.ui.components.cells")
 local ConfigDialog = require("ide.internal.dialogs.configdialog")
 
 local NodeSettings = Utils.class(Dialogs.Dialog)
@@ -35,7 +35,7 @@ function NodeSettings:init(builder)
                 items = function()
                     return vim.tbl_keys(self.builder:read_package().dependencies or { })
                 end,
-                change = function(_, data) self:install_dependencies(data) end
+                change = function(_, data) self:install_dependencies(data, false) end
             }),
 
             Components.ListView("Dev Dependencies", {
@@ -79,12 +79,8 @@ function NodeSettings:init(builder)
     })
 end
 
-function NodeSettings:uninstall_dependencies(deps, dev, onexit)
+function NodeSettings:uninstall_dependencies(deps, dev)
     if vim.tbl_isempty(deps) then
-        if vim.is_callable(onexit) then
-            onexit()
-        end
-
         return
     end
 
@@ -93,42 +89,50 @@ function NodeSettings:uninstall_dependencies(deps, dev, onexit)
         dev and "--save-dev" or "--save",
     }, deps)
 
-    self.project:new_job("npm", args, {
+    self.project:execute_async("npm", args, {
         title = "Uninstalling Dependencies...",
         state = "configure",
         src = true,
-        onexit = onexit,
-      })
+    })
 end
 
 function NodeSettings:sync_dependencies()
-    local package = self.builder:read_package()
-
-    self:install_dependencies(vim.tbl_keys(package.devDependencies or {}), true, function()
+    Async.run(function()
+        local package = self.builder:read_package()
+        self:install_dependencies(vim.tbl_keys(package.devDependencies or {}), true)
         self:install_dependencies(vim.tbl_keys(package.dependencies or {}), false)
     end)
 end
 
-function NodeSettings:install_dependencies(items, dev, onexit)
+function NodeSettings:install_dependencies(items, dev)
     local package = self.builder:read_package()
-    local deps = dev and package.devDependencies or package.dependencies
+    local deps = { }
+
+    if dev then
+        deps = package.devDependencies
+    else
+        deps = package.dependencies
+    end
 
     local toremove = vim.tbl_filter(function(dep)
         return not vim.tbl_contains(items, dep)
     end, vim.tbl_keys(deps or { }))
 
-    self:uninstall_dependencies(toremove, dev, function()
-        local args = vim.list_extend({
-            "install",
-            dev and "--save-dev" or "--save"
-        }, items)
+    Async.run(function()
+        self:uninstall_dependencies(toremove, dev)
 
-        self.project:new_job("npm", args, {
-            title = "Installing Dependencies...",
-            state = "configure",
-            src = true,
-            onexit = onexit
-        })
+        if not vim.tbl_isempty(items) then
+            local args = vim.list_extend({
+                "install",
+                dev and "--save-dev" or "--save"
+            }, items)
+
+            self.project:execute_async("npm", args, {
+                title = "Installing Dependencies...",
+                state = "configure",
+                src = true,
+            })
+        end
     end)
 end
 

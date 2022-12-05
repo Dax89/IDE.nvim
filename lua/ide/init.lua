@@ -215,6 +215,12 @@ function IDE:project_write()
     end
 end
 
+function IDE:project_stop()
+    if self.active then
+        self:get_active():stop()
+    end
+end
+
 function IDE:select_project_config()
     if self.active then
         self:get_active():select_config()
@@ -284,6 +290,10 @@ local function setup(config)
 
     vim.api.nvim_create_user_command("IdeProjectBuild", function()
         ide:project_build()
+    end, { })
+
+    vim.api.nvim_create_user_command("IdeProjectStop", function()
+        ide:project_stop()
     end, { })
 
     vim.api.nvim_create_user_command("IdeProjectConfigure", function()

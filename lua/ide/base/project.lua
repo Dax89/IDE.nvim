@@ -1,4 +1,5 @@
 local Utils = require("ide.utils")
+local Async = require("plenary.async")
 local Path = require("plenary.path")
 local Runner = require("ide.base.runner")
 local Scan = require("plenary.scandir")
@@ -45,7 +46,7 @@ function Project:init(config, path, name, builder)
         if ok then
             Log.debug("Project: Loading '" .. self:get_name() .. "', type: '" .. self:get_type() .. "', builder: '" .. builder .. "'")
         else
-            error("Builder '" .. builder .. "' not found")
+            error(BuilderType)
         end
 
         self.builder = BuilderType(self)
@@ -59,28 +60,31 @@ function Project:init(config, path, name, builder)
     end
 end
 
-function Project:execute(command, args, options)
+function Project:execute_async(command, args, options)
     options = options or { }
-    return self:_execute(command, args, options.src and self:get_path(true) or self:get_build_path(true), options)
+    return self:_execute_async(command, args, options.src and self:get_path(true) or self:get_build_path(true), options)
 end
 
-function Project:new_job(command, args, options)
+function Project:execute(command, args, options)
     options = options or { }
 
     local cwd = vim.F.if_nil(options.cwd, options.src and self:get_path(true) or self:get_build_path(true))
-    return self:_new_job(command, args, cwd, options)
+    return self:_execute(command, args, cwd, options)
 end
 
-function Project:create(createmodel)
+function Project:create(createmodel, ondone)
     if type(createmodel.template) == "string" then
         self:untemplate(createmodel.template, createmodel:get_data())
     end
 
     if self.builder then
-        self.builder:create(createmodel)
+        self.builder:create(createmodel, function()
+            Utils.if_call(ondone)
+            self:save()
+        end)
+    elseif vim.is_callable(ondone) then
+        Utils.if_call(ondone)
     end
-
-    self:save()
 end
 
 function Project:get_name()
@@ -355,27 +359,35 @@ end
 function Project:build()
     if not self:has_state("build") and self.builder then
         self:save()
-        self.builder:build()
+        Async.run(function()
+            self.builder:build()
+        end)
     end
 end
 
 function Project:run()
     if self.builder then
         self:save()
-        self.builder:run()
+        Async.run(function()
+            self.builder:run()
+        end)
     end
 end
 
 function Project:debug(options)
     if self.builder then
         self:save()
-        self.builder:debug(options)
+        Async.run(function()
+            self.builder:debug(options)
+        end)
     end
 end
 
 function Project:settings()
     if self.builder then
-        self.builder:settings()
+        Async.run(function()
+            self.builder:settings()
+        end)
     end
 end
 
@@ -475,7 +487,9 @@ end
 
 function Project:on_ready()
     if self.builder then
-        self.builder:on_ready()
+        Async.run(function()
+            self.builder:on_ready()
+        end)
     end
 end
 

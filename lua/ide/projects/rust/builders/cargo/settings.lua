@@ -3,10 +3,10 @@ local Dialogs = require("ide.internal.dialogs")
 
 local CargoSettings = Utils.class(Dialogs.ConfigDialog)
 
-function CargoSettings:init(builder, header)
+function CargoSettings:init(builder)
     builder:configure()
 
-    Dialogs.ConfigDialog.init(self, builder, header, {
+    Dialogs.ConfigDialog.init(self, builder, {
         actions = {"Assign Target"},
 
         actionselected = function(_, idx)

@@ -11,34 +11,32 @@ function CMake:get_type()
     return "cmake"
 end
 
-function Builder:on_config_changed(_)
+function CMake:on_config_changed(_)
     self:configure()
 end
 
 function CMake:on_ready()
-    self:_configure({
-        onexit = function()
-            for _, m in ipairs(CMake.BUILD_MODES) do
-                self.project:check_config(m, {mode = m})
-            end
+    self:_configure(CMake.BUILD_MODES[1])
 
-            if not self.project:get_selected_config() then
-                self.project:set_selected_config(CMake.BUILD_MODES[1])
-            end
+    for _, m in ipairs(CMake.BUILD_MODES) do
+        self.project:check_config(m, {mode = m})
+    end
 
-            local targets = self:get_targets(CMake.BUILD_MODES[1])
+    if not self.project:get_selected_config() then
+        self.project:set_selected_config(CMake.BUILD_MODES[1])
+    end
 
-            for _, tgt in ipairs(targets) do
-                self.project:check_runconfig(tgt, {target = tgt})
-            end
+    local targets = self:get_targets(CMake.BUILD_MODES[1])
 
-            if not vim.tbl_isempty(targets) and not self.project:get_selected_runconfig() then
-                self.project:set_selected_runconfig(targets[1])
-            end
+    for _, tgt in ipairs(targets) do
+        self.project:check_runconfig(tgt, {target = tgt})
+    end
 
-            self.project:write()
-        end
-    }, CMake.BUILD_MODES[1])
+    if not vim.tbl_isempty(targets) and not self.project:get_selected_runconfig() then
+        self.project:set_selected_runconfig(targets[1])
+    end
+
+    self.project:write()
 end
 
 function CMake:_write_query(q, mode)
@@ -83,19 +81,18 @@ function CMake:get_targets(mode, type)
     return {}
 end
 
-function CMake:_configure(options, mode)
-    options = options or { }
+function CMake:_configure(mode)
     self:_write_query("codemodel-v2", mode)
 
     if not mode then
         mode = self.project:get_selected_config().mode
     end
 
-    self.project:new_job("cmake", {
+    self.project:execute_async("cmake", {
         "-B", self.project:get_build_path(true, mode),
         "-DCMAKE_EXPORT_COMPILE_COMMANDS=1",
         "-DCMAKE_BUILD_TYPE=" .. mode,
-    }, vim.tbl_extend("keep", {title = "CMake - Configure", src = true, state = "configure"}, options))
+    }, {title = "CMake - Configure", src = true, state = "configure"})
 
     local compilecommands = Path:new(self.project:get_build_path(), "compile_commands.json")
 
@@ -104,54 +101,65 @@ function CMake:_configure(options, mode)
     end
 end
 
+function CMake:get_executable_filepath(runconfig)
+    local targetdata = self:_read_query("target-" .. runconfig.target)
+
+    if targetdata then
+        return Path:new(self.project:get_build_path(true), targetdata.artifacts[1].path)
+    end
+
+    return nil
+end
+
 function CMake:configure()
     Builder.configure(self)
     self:_configure()
 end
 
-function CMake:build(_, onexit)
-    self:check_settings(function(_, config)
+function CMake:build()
+    local s = self:check_settings()
+
+    if s then
         local args = {
             "--build", ".",
-            "--config", config.mode,
+            "--config", s.config.mode,
             "-j" .. Utils.get_number_of_cores(),
         }
 
-        self.project:new_job("cmake", args, {
+        self.project:execute_async("cmake", args, {
             title = "CMake - Build",
             state = "build",
-            onexit = onexit
         })
-    end)
+    end
 end
 
 function CMake:run()
-    self:check_settings(function(_, _, runconfig)
-        local targetdata = self:_read_query("target-" .. runconfig.target)
+    local s = self:check_settings()
 
-        if targetdata then
-            self:check_and_run(Path:new(self.project:get_build_path(true), targetdata.artifacts[1].path), runconfig.cmdline, runconfig)
+    if s then
+        local filepath = self:get_executable_filepath(s.runconfig)
+
+        if filepath then
+            self:do_run(filepath, s.runconfig.cmdline, {build = true})
         else
-            Utils.notify("Cannot run configuration '" .. runconfig.name .. "'")
+            Utils.notify("Cannot run configuration '" .. s.runconfig.name .. "'")
         end
-    end)
+    end
 end
 
 function CMake:debug(options)
-    self:check_settings(function(_, _, runconfig)
-        local targetdata = self:_read_query("target-" .. runconfig.target)
+    local s = self:check_settings()
 
-        if targetdata then
-            self.project:run_dap({
-                request = "launch",
-                type = "codelldb",
-                program = tostring(Path:new(self.project:get_build_path(true), targetdata.artifacts[1].path)),
-                args = runconfig.arguments and vim.split(runconfig.arguments, " ") or nil,
-            }, options or { })
-        else
-            Utils.notify("Cannot debug configuration '" .. runconfig.name .. "'")
-        end
-    end)
+    if s then
+        self.project:run_dap({
+            request = "launch",
+            type = "codelldb",
+            program = tostring(self:get_executable_filepath(s.runconfig)),
+            args = s.runconfig.arguments and vim.split(s.runconfig.arguments, " ") or nil,
+        }, options or { })
+    else
+        Utils.notify("Cannot debug configuration '" .. s.runconfig.name .. "'")
+    end
 end
 
 function CMake:settings()

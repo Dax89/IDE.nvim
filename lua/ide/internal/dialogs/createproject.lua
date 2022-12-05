@@ -1,3 +1,4 @@
+local Async = require("plenary.async")
 local Utils = require("ide.utils")
 local Components = require("ide.ui.components")
 local Dialogs = require("ide.ui.dialogs")
@@ -62,22 +63,31 @@ function CreateProjectDialog:on_accept(data)
     local ok, ProjectType = pcall(require, "ide.projects." .. data.type)
 
     if ok then
+        local templates = ProjectType.get_templates(data.type, data.builder)
+        data.templatedata = templates[data.template]
+
         local p = ProjectType(self.ide.config, data.folder, data.name, data.builder)
-        p:create(data)
 
-        local rootpath = p:get_path(true)
-        self.ide.projects[rootpath] = p
-        self.ide.active = rootpath
+        Async.run(function()
+            p:create(data)
+            p:write(true) -- Save project file
+        end, function()
+            local rootpath = p:get_path(true)
+            self.ide.projects[rootpath] = p
+            self.ide.active = rootpath
 
-        Log.debug("CreateProjectDialog:on_accept(): Creating project '" .. data.name .. "' in " .. rootpath)
+            Log.debug("CreateProjectDialog:on_accept(): Creating project '" .. data.name .. "' in " .. rootpath)
 
-        if data.git == true then
-            Log.debug("CreateProjectDialog:on_accept(): Initializing git repo in " .. rootpath)
-            Utils.os_execute("git", {"init", rootpath})
-        end
+            if data.git == true then
+                Log.debug("CreateProjectDialog:on_accept(): Initializing git repo in " .. rootpath)
+                Utils.os_execute("git", {"init", rootpath})
+            end
 
-        self.ide:update_recents(p)
-        self.ide:pick_file(rootpath)
+            vim.schedule(function()
+                self.ide:update_recents(p)
+                self.ide:pick_file(rootpath)
+            end)
+        end)
     end
 end
 

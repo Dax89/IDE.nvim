@@ -39,23 +39,35 @@ function Node:config_to_scripts()
 end
 
 function Node:create(data)
-    self.project:execute("npm", {"init", "-y"}, {src = true})
+    local tdata = data.templatedata
 
-    local packagepath = Path:new(self.project:get_path(), "package.json")
+    if tdata.command then
+        self.project:execute_async(tdata.command.cmd, tdata.command.args, {src = true, log = false})
+    else
+        self.project:execute_async("npm", {"init", "-y"}, {src = true})
 
-    if not packagepath:is_file() then
-        error("package.json not found")
+        local packagepath = Path:new(self.project:get_path(), "package.json")
+
+        if not packagepath:is_file() then
+            error("package.json not found")
+        end
+
+        local p = Utils.read_json(packagepath)
+        p.name = data.name
+        Utils.write_json(packagepath, p)
     end
+end
 
-    local p = Utils.read_json(packagepath)
-    p.name = data.name
-    Utils.write_json(packagepath, p)
+function Node:build()
+    self:do_run_cmd("npm", {"install"}, {
+        title = "Building Node Package",
+        src = true,
+    })
 end
 
 function Node:run()
-    self:check_settings(function(_, _, runconfig)
-        self:do_run_cmd("npm run " .. runconfig.name, runconfig, {src = true})
-    end, {checkconfig = false})
+    local runcfg = self.project:get_selected_runconfig()
+    self:do_run_cmd("npm", {"run", runcfg.name}, {src = true})
 end
 
 function Node:read_package()
