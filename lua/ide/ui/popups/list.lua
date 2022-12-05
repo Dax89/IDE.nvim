@@ -161,7 +161,8 @@ function ListPopup:on_edit()
     end
 
     vim.ui.input({
-        prompt = "Edit item"
+        prompt = "Edit item",
+        default = private[self].items[self.index + 1]
     }, function(choice)
         if choice then
             if private[self].unique and self:_item_exists(choice) then

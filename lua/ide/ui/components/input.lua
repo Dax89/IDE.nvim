@@ -69,7 +69,7 @@ function Input:on_doubleclick(e)
 end
 
 function Input:on_event(e)
-    vim.ui.input({prompt = self.label}, function(choice)
+    vim.ui.input({prompt = self.label, default = self:get_value()}, function(choice)
         if choice then
             self:set_value(choice)
             e.update()
