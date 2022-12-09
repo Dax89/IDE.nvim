@@ -325,7 +325,9 @@ end
 function Project:configure()
     if not self:has_state("configure") and not self:has_state("build") and self.builder then
         self:save()
-        self.builder:configure()
+        Async.run(function()
+            self.builder:configure()
+        end)
     end
 end
 

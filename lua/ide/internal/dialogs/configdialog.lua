@@ -25,6 +25,9 @@ function ConfigDialog:init(builder, options)
 
     Popups.TablePopup.init(self, self:_get_header(), self:_get_data(), self:_get_title(),
     {
+        actions = options.actions,
+        actionselected = options.actionselected,
+
         buttons = function()
             if private[self].togglemode then
                 return private[self].buildmode and {"Run Config"} or {"Build Config"}
