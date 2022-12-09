@@ -134,37 +134,37 @@ function IDE:project_check(filepath, filetype)
         return
     end
 
-    local projcfg = self:_check_projectfile(p)
-    local ok, ProjectType = pcall(require, string.format("ide.projects.%s", projcfg and projcfg.type or filetype))
+    local proj = self:_check_projectfile(p)
+    local ok, ProjectType = pcall(require, string.format("ide.projects.%s", proj and proj.config.type or filetype))
 
     if not ok then
         Log.debug("IDE.project_check(): Project not found for filetype '" .. filepath .. "' loading default")
         ProjectType = require("ide.base.project") -- Try to guess a generic project
     end
 
-    if not projcfg then
-        projcfg = self.rooter:find_rootpath(p:is_file() and p:parent() or p, filetype, ProjectType)
+    if not proj then
+        proj = self.rooter:find_rootpath(p:is_file() and p:parent() or p, filetype, ProjectType)
     end
 
     local added = false
 
-    if projcfg then
-        if not self.projects[projcfg.root] then
+    if proj then
+        if not self.projects[proj.root] then
             added = true
 
-            local project = ProjectType(self.config, projcfg.root, projcfg.name, projcfg.config.builder)
-            self.projects[projcfg.root] = project
+            local project = ProjectType(self.config, proj.root, proj.name, proj.config.builder)
+            self.projects[proj.root] = project
             self:update_recents(project)
             project:on_ready()
             project:write()
         else
-            Log.debug("IDE.project_check(): Project: '" .. self.project[projcfg.root] .. "' already loaded, skipping...")
+            Log.debug("IDE.project_check(): Project: '" .. self.project[proj.root] .. "' already loaded, skipping...")
         end
 
-        self.active = projcfg.root
+        self.active = proj.root
 
-        if vim.fn.getcwd() ~= projcfg.root then
-            vim.api.nvim_set_current_dir(projcfg.root)
+        if vim.fn.getcwd() ~= proj.root then
+            vim.api.nvim_set_current_dir(proj.root)
         end
     else
         Log.debug("IDE.project_check(): File '" .. Utils.get_filename(p) .. "' doesn't belong to any project")
