@@ -93,7 +93,7 @@ function M.os_execute(cmd, args, cwd, options)
     return Job:new(vim.tbl_extend("keep", {
         command = cmd,
         args = args,
-        cwd = tostring(cwd)
+        cwd = cwd and tostring(cwd) or nil
     }, options or { })):sync()
 end
 

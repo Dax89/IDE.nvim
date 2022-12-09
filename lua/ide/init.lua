@@ -134,37 +134,37 @@ function IDE:project_check(filepath, filetype)
         return
     end
 
-    local proj = self:_check_projectfile(p)
-    local ok, ProjectType = pcall(require, string.format("ide.projects.%s", proj and proj.config.type or filetype))
+    local pf = self:_check_projectfile(p)
+    local ok, ProjectType = pcall(require, string.format("ide.projects.%s", pf and pf.config.type or filetype))
 
     if not ok then
         Log.debug("IDE.project_check(): Project not found for filetype '" .. filepath .. "' loading default")
         ProjectType = require("ide.base.project") -- Try to guess a generic project
     end
 
-    if not proj then
-        proj = self.rooter:find_rootpath(p:is_file() and p:parent() or p, filetype, ProjectType)
+    if not pf then
+        pf = self.rooter:find_rootpath(p:is_file() and p:parent() or p, filetype, ProjectType)
     end
 
     local added = false
 
-    if proj then
-        if not self.projects[proj.root] then
+    if pf then
+        if not self.projects[pf.root] then
             added = true
 
-            local project = ProjectType(self.config, proj.root, proj.name, proj.config.builder)
-            self.projects[proj.root] = project
+            local project = ProjectType(self.config, pf.root, pf.name, pf.config.builder)
+            self.projects[pf.root] = project
             self:update_recents(project)
             project:on_ready()
             project:write()
         else
-            Log.debug("IDE.project_check(): Project: '" .. self.project[proj.root] .. "' already loaded, skipping...")
+            Log.debug("IDE.project_check(): Project: '" .. self.project[pf.root] .. "' already loaded, skipping...")
         end
 
-        self.active = proj.root
+        self.active = pf.root
 
-        if vim.fn.getcwd() ~= proj.root then
-            vim.api.nvim_set_current_dir(proj.root)
+        if vim.fn.getcwd() ~= pf.root then
+            vim.api.nvim_set_current_dir(pf.root)
         end
     else
         Log.debug("IDE.project_check(): File '" .. Utils.get_filename(p) .. "' doesn't belong to any project")
