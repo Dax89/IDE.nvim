@@ -449,7 +449,6 @@ function Project:_select_config(title, config, cb)
     vim.ui.select(vim.tbl_keys(config), {
         prompt = title,
         format_item = function(item)
-            vim.pretty_print(config[item])
             if config[item].selected then
                 return item .. " - SELECTED"
             end
