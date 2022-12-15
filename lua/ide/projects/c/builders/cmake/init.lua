@@ -140,7 +140,7 @@ function CMake:run()
         local filepath = self:get_executable_filepath(s.runconfig)
 
         if filepath then
-            self:do_run(filepath, s.runconfig.cmdline, {build = true})
+            self:do_run(filepath, s.runconfig.cmdline, {build = true, cwd = filepath:parent()})
         else
             Utils.notify("Cannot run configuration '" .. s.runconfig.name .. "'")
         end
@@ -151,14 +151,20 @@ function CMake:debug(options)
     local s = self:check_settings()
 
     if s then
-        self.project:run_dap({
-            request = "launch",
-            type = "codelldb",
-            program = tostring(self:get_executable_filepath(s.runconfig)),
-            args = s.runconfig.arguments and vim.split(s.runconfig.arguments, " ") or nil,
-        }, options or { })
-    else
-        Utils.notify("Cannot debug configuration '" .. s.runconfig.name .. "'")
+        local filepath = self:get_executable_filepath(s.runconfig)
+
+        if filepath then
+            self.project:run_dap({
+                request = "launch",
+                type = "codelldb",
+                program = tostring(filepath),
+                args = s.runconfig.arguments and vim.split(s.runconfig.arguments, " ") or nil,
+            }, options or {
+                cwd = tostring(filepath:parent())
+            })
+        else
+            Utils.notify("Cannot debug configuration '" .. s.runconfig.name .. "'")
+        end
     end
 end
 
