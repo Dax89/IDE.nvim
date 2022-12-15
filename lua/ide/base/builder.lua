@@ -81,7 +81,11 @@ function Builder:do_run(filepath, args, options)
         self:build()
     end
 
-    self.project:execute(p, args, vim.tbl_extend("force", options, {title = title, state = "run"}))
+    self.project:execute(p, args, vim.tbl_extend("force", options, {
+        title = title,
+        state = "run",
+        cwd = tostring(vim.F.if_nil(options.cwd, options.source and self.project:get_path() or self.project:get_build_path())),
+    }))
 end
 
 function Builder:_check_settings(options, c, callback)
