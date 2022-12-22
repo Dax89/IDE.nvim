@@ -97,7 +97,6 @@ function Zig:run()
     local s = self:check_settings()
 
     if s then
-        vim.pretty_print(s)
         self:do_run_cmd("zig", {"build", s.runconfig.name}, {src = true})
     end
 end
