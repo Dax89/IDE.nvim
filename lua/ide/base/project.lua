@@ -457,7 +457,9 @@ function Project:_select_config(title, config, cb)
         end
     }, function(choice)
         if choice and vim.is_callable(cb) then
-            cb(choice)
+            Async.run(function()
+                cb(choice)
+            end)
         end
     end)
 end
