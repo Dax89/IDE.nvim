@@ -1,3 +1,7 @@
+# !!! DEPRECATED !!!
+IDE.nvim has been superseded by the more powerful and easier to use [Automaton](https://github.com/Dax89/automaton.nvim)
+
+# IDE.nvim
 <p align="center">
   <a href="https://github.com/Dax89/ide.nvim">
     <img alt="IDE.NVim" height="125" src="https://user-images.githubusercontent.com/1503603/192603647-62424945-9930-4622-95a0-99f1b0bd9543.png">
